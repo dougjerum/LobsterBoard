@@ -10,7 +10,7 @@
  * Environment variables:
  *   PORT          - Server port (default: 8080)
  *   HOST          - Bind address (default: 127.0.0.1 for security)
- *   OPENCLAW_URL  - OpenClaw gateway URL (default: http://localhost:11470)
+ *   OPENCLAW_URL  - OpenClaw gateway URL (default: http://localhost:18789)
  * 
  * Security: By default binds to localhost only. To expose on network:
  *   HOST=0.0.0.0 node server.js
@@ -24,7 +24,7 @@ const path = require('path');
 // Configuration
 const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '127.0.0.1';
-const OPENCLAW_URL = (process.env.OPENCLAW_URL || 'http://localhost:11470').replace(/\/$/, '');
+const OPENCLAW_URL = (process.env.OPENCLAW_URL || 'http://localhost:18789').replace(/\/$/, '');
 
 // Allowed API endpoints (whitelist for security)
 const ALLOWED_API_PATHS = [

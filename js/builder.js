@@ -1475,7 +1475,7 @@ function generateServerJs() {
  * Environment variables:
  *   PORT          - Server port (default: 8080)
  *   HOST          - Bind address (default: 127.0.0.1 for security)
- *   OPENCLAW_URL  - OpenClaw gateway URL (default: http://localhost:11470)
+ *   OPENCLAW_URL  - OpenClaw gateway URL (default: http://localhost:18789)
  * 
  * Security: By default binds to localhost only. To expose on network:
  *   HOST=0.0.0.0 node server.js
@@ -1488,7 +1488,7 @@ const path = require('path');
 
 const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '127.0.0.1';
-const OPENCLAW_URL = (process.env.OPENCLAW_URL || 'http://localhost:11470').replace(/\\/$/, '');
+const OPENCLAW_URL = (process.env.OPENCLAW_URL || 'http://localhost:18789').replace(/\\/$/, '');
 
 const ALLOWED_API_PATHS = ['/api/status', '/api/health', '/api/activity', '/api/cron', '/api/logs', '/api/sessions', '/api/usage/tokens'];
 
@@ -1640,7 +1640,7 @@ Open http://localhost:8080 in your browser.
 PORT=3000 node server.js
 
 # Custom OpenClaw location
-OPENCLAW_URL=http://192.168.1.100:11470 node server.js
+OPENCLAW_URL=http://192.168.1.100:18789 node server.js
 
 # Expose to network (trusted networks only!)
 HOST=0.0.0.0 node server.js
