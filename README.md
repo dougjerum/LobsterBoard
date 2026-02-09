@@ -70,12 +70,12 @@ The server proxies API requests to OpenClaw, solving CORS issues.
 
 2. **Extract the ZIP** to a folder
 
-3. **Copy `export-server.js`** to that folder (or it may already be included)
+3. **`server.js` is included** in the exported ZIP
 
 4. **Run the server**:
    ```bash
    cd your-dashboard-folder
-   node export-server.js
+   node server.js
    ```
 
 5. **Open** http://localhost:8080 in your browser
@@ -83,13 +83,13 @@ The server proxies API requests to OpenClaw, solving CORS issues.
 **Configuration** (environment variables):
 ```bash
 # Custom port for the dashboard server
-PORT=3000 node export-server.js
+PORT=3000 node server.js
 
 # Custom OpenClaw gateway URL (if not on default port 18789)
-OPENCLAW_URL=http://localhost:YOUR_PORT node export-server.js
+OPENCLAW_URL=http://localhost:YOUR_PORT node server.js
 
 # Expose to network (⚠️ only on trusted networks!)
-HOST=0.0.0.0 node export-server.js
+HOST=0.0.0.0 node server.js
 ```
 
 > **⚠️ Non-Default Gateway Port?**
@@ -100,7 +100,7 @@ HOST=0.0.0.0 node export-server.js
 > ```
 > Then start the server with:
 > ```bash
-> OPENCLAW_URL=http://localhost:YOUR_PORT node export-server.js
+> OPENCLAW_URL=http://localhost:YOUR_PORT node server.js
 > ```
 
 ### Option B: Run OpenClaw with CORS Headers
@@ -115,7 +115,7 @@ If you control your OpenClaw config, you can add CORS headers directly.
 2. Choose **Download Dashboard**
 3. A ZIP file is created containing:
    - `index.html` - Your complete dashboard
-   - `export-server.js` - Server for OpenClaw widgets (optional)
+   - `server.js` - Server for OpenClaw widgets (optional)
    - Any embedded images
 
 The exported HTML is self-contained and can be:
@@ -136,7 +136,7 @@ dashboard-builder/
 ├── js/
 │   ├── builder.js      # Builder logic
 │   └── widgets.js      # Widget definitions
-├── export-server.js    # Node.js server for exports
+├── server.js    # Node.js server for exports
 └── WIDGETS-STATUS.md   # Widget verification status
 ```
 
