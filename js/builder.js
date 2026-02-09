@@ -942,7 +942,7 @@ function showPreview() {
     let html = processWidgetHtml(template.generateHtml(props), widget.properties.showHeader);
 
     return `
-      <div class="widget-container" style="position:absolute;left:${widget.x}px;top:${widget.y}px;width:${widget.width}px;height:${widget.height}px;">
+      <div class="widget-container" data-widget-id="${widget.id}" style="position:absolute;left:${widget.x}px;top:${widget.y}px;width:${widget.width}px;height:${widget.height}px;">
         ${html}
       </div>`;
   }).join('\n');
@@ -1011,9 +1011,9 @@ function generateDashboardHtml() {
     const props = { ...widget.properties, id: widget.id };
     let html = processWidgetHtml(template.generateHtml(props), widget.properties.showHeader);
 
-    // Wrap in positioned container
+    // Wrap in positioned container with data-widget-id for post-export editing
     return `
-      <div class="widget-container" style="position:absolute;left:${widget.x}px;top:${widget.y}px;width:${widget.width}px;height:${widget.height}px;">
+      <div class="widget-container" data-widget-id="${widget.id}" style="position:absolute;left:${widget.x}px;top:${widget.y}px;width:${widget.width}px;height:${widget.height}px;">
         ${html}
       </div>`;
   }).join('\n');
@@ -1449,6 +1449,269 @@ body {
   background: var(--bg-tertiary);
   border-radius: 3px;
 }
+
+/* Post-Export Edit Mode */
+.edit-mode .widget-container {
+  cursor: move;
+  outline: 2px dashed #3b82f6;
+  outline-offset: -2px;
+}
+
+.edit-mode .widget-container:hover {
+  outline-color: #60a5fa;
+}
+
+.edit-mode .widget-container.dragging {
+  opacity: 0.8;
+  z-index: 1000;
+}
+
+.resize-handle-edit {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  background: #3b82f6;
+  border-radius: 2px 0 0 0;
+  z-index: 10;
+}
+
+.resize-handle-edit::before {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+}
+
+.edit-mode .resize-handle-edit {
+  display: block;
+}
+
+#edit-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: background 0.15s, transform 0.1s;
+}
+
+#edit-toggle:hover {
+  background: #334155;
+}
+
+#edit-toggle:active {
+  transform: scale(0.98);
+}
+
+#edit-toggle.active {
+  background: #3b82f6;
+}
+`;
+}
+
+function generateEditJs() {
+  return `
+// ─────────────────────────────────────────────
+// POST-EXPORT LAYOUT EDITING
+// ─────────────────────────────────────────────
+
+(function() {
+  const STORAGE_KEY = 'lobsterboard-layout';
+  const GRID_SIZE = 20;
+  const MIN_WIDTH = 100;
+  const MIN_HEIGHT = 60;
+  
+  let editMode = false;
+  let activeWidget = null;
+  let startX, startY, origLeft, origTop, origWidth, origHeight;
+  let isResizing = false;
+
+  // Initialize on DOM ready
+  document.addEventListener('DOMContentLoaded', initEditMode);
+
+  function initEditMode() {
+    // Create edit toggle button
+    const btn = document.createElement('button');
+    btn.id = 'edit-toggle';
+    btn.textContent = '✏️ Edit Layout';
+    btn.onclick = toggleEditMode;
+    document.body.appendChild(btn);
+
+    // Add resize handles and event listeners to all widgets
+    document.querySelectorAll('.widget-container').forEach(initWidget);
+
+    // Load saved positions
+    loadPositions();
+  }
+
+  function initWidget(widget) {
+    // Add resize handle
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle-edit';
+    widget.appendChild(handle);
+
+    // Drag to move
+    widget.addEventListener('mousedown', onWidgetMouseDown);
+    
+    // Resize handle
+    handle.addEventListener('mousedown', onResizeMouseDown);
+  }
+
+  function toggleEditMode() {
+    editMode = !editMode;
+    document.body.classList.toggle('edit-mode', editMode);
+    document.getElementById('edit-toggle').classList.toggle('active', editMode);
+    document.getElementById('edit-toggle').textContent = editMode ? '💾 Save Layout' : '✏️ Edit Layout';
+    
+    if (!editMode) {
+      savePositions();
+    }
+  }
+
+  function onWidgetMouseDown(e) {
+    if (!editMode) return;
+    if (e.target.classList.contains('resize-handle-edit')) return;
+    if (e.button !== 0) return;
+
+    e.preventDefault();
+    activeWidget = e.currentTarget;
+    isResizing = false;
+    
+    startX = e.clientX;
+    startY = e.clientY;
+    origLeft = activeWidget.offsetLeft;
+    origTop = activeWidget.offsetTop;
+
+    activeWidget.classList.add('dragging');
+    
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  function onResizeMouseDown(e) {
+    if (!editMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    activeWidget = e.target.parentElement;
+    isResizing = true;
+    
+    startX = e.clientX;
+    startY = e.clientY;
+    origWidth = activeWidget.offsetWidth;
+    origHeight = activeWidget.offsetHeight;
+
+    activeWidget.classList.add('dragging');
+    
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  function onMouseMove(e) {
+    if (!activeWidget) return;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (isResizing) {
+      // Resize
+      const newWidth = Math.max(MIN_WIDTH, origWidth + dx);
+      const newHeight = Math.max(MIN_HEIGHT, origHeight + dy);
+      activeWidget.style.width = newWidth + 'px';
+      activeWidget.style.height = newHeight + 'px';
+    } else {
+      // Move
+      const newLeft = Math.max(0, origLeft + dx);
+      const newTop = Math.max(0, origTop + dy);
+      activeWidget.style.left = newLeft + 'px';
+      activeWidget.style.top = newTop + 'px';
+    }
+  }
+
+  function onMouseUp() {
+    if (!activeWidget) return;
+
+    // Snap to grid
+    if (isResizing) {
+      activeWidget.style.width = snapToGrid(activeWidget.offsetWidth) + 'px';
+      activeWidget.style.height = snapToGrid(activeWidget.offsetHeight) + 'px';
+    } else {
+      activeWidget.style.left = snapToGrid(activeWidget.offsetLeft) + 'px';
+      activeWidget.style.top = snapToGrid(activeWidget.offsetTop) + 'px';
+    }
+
+    activeWidget.classList.remove('dragging');
+    activeWidget = null;
+    isResizing = false;
+    
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  }
+
+  function snapToGrid(value) {
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
+  }
+
+  function savePositions() {
+    const positions = {};
+    document.querySelectorAll('.widget-container').forEach(widget => {
+      const id = widget.dataset.widgetId;
+      if (id) {
+        positions[id] = {
+          left: widget.offsetLeft,
+          top: widget.offsetTop,
+          width: widget.offsetWidth,
+          height: widget.offsetHeight
+        };
+      }
+    });
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
+      console.log('Layout saved');
+    } catch (e) {
+      console.warn('Failed to save layout:', e);
+    }
+  }
+
+  function loadPositions() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      
+      const positions = JSON.parse(saved);
+      document.querySelectorAll('.widget-container').forEach(widget => {
+        const id = widget.dataset.widgetId;
+        const pos = positions[id];
+        if (pos) {
+          widget.style.left = pos.left + 'px';
+          widget.style.top = pos.top + 'px';
+          widget.style.width = pos.width + 'px';
+          widget.style.height = pos.height + 'px';
+        }
+      });
+      console.log('Layout restored from localStorage');
+    } catch (e) {
+      console.warn('Failed to load saved layout:', e);
+    }
+  }
+})();
 `;
 }
 
@@ -1461,6 +1724,8 @@ function generateDashboardJs() {
     return template.generateJs(props);
   }).join('\n\n');
 
+  const editJs = generateEditJs();
+
   return `/**
  * OpenClaw Dashboard - Generated JavaScript
  * Replace YOUR_*_API_KEY placeholders with your actual API keys
@@ -1471,6 +1736,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 ${widgetJs}
+
+${editJs}
 `;
 }
 
