@@ -726,6 +726,7 @@ const WIDGETS = {
     properties: {
       title: 'My Dashboard',
       showHeader: false,
+      showBorder: false,
       fontSize: 24,
       fontColor: '#e6edf3',
       textAlign: 'left',
@@ -738,7 +739,7 @@ const WIDGETS = {
         color:${props.fontColor || '#e6edf3'};
         text-align:${props.textAlign || 'left'};
         font-weight:${props.fontWeight || 'bold'};
-        justify-content:${props.textAlign === 'center' ? 'center' : props.textAlign === 'right' ? 'flex-end' : 'flex-start'};">
+        justify-content:${props.textAlign === 'center' ? 'center' : props.textAlign === 'right' ? 'flex-end' : 'flex-start'};${props.showBorder ? 'border:1px solid #3a4150;border-radius:8px;' : ''}">
         ${props.title || 'Header'}
       </div>`,
     generateJs: () => ''

@@ -182,6 +182,36 @@
         "lineColor": "#30363d",
         "lineThickness": 2
       }
+    },
+    {
+      "id": "widget-14",
+      "type": "text-header",
+      "x": 20,
+      "y": 20,
+      "width": 400,
+      "height": 50,
+      "properties": {
+        "title": "Lobster Board",
+        "showHeader": false,
+        "fontSize": 24,
+        "fontColor": "#e6edf3",
+        "textAlign": "left",
+        "fontWeight": "bold"
+      }
+    },
+    {
+      "id": "widget-15",
+      "type": "horizontal-line",
+      "x": 20,
+      "y": 40,
+      "width": 1880,
+      "height": 60,
+      "properties": {
+        "title": "",
+        "showHeader": false,
+        "lineColor": "#30363d",
+        "lineThickness": 2
+      }
     }
   ]
 }

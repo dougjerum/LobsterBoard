@@ -667,6 +667,9 @@ function initProperties() {
   document.getElementById('prop-work-minutes').addEventListener('change', onPropertyChange);
   document.getElementById('prop-break-minutes').addEventListener('change', onPropertyChange);
 
+  // Show border checkbox
+  document.getElementById('prop-showborder').addEventListener('change', onPropertyChange);
+
   // Text header fields
   document.getElementById('prop-fontsize').addEventListener('change', onPropertyChange);
   document.getElementById('prop-fontcolor').addEventListener('input', onPropertyChange);
@@ -738,6 +741,7 @@ function showProperties(widget) {
   document.getElementById('prop-fontweight-group').style.display = 'none';
   document.getElementById('prop-linecolor-group').style.display = 'none';
   document.getElementById('prop-linethickness-group').style.display = 'none';
+  document.getElementById('prop-showborder-group').style.display = 'none';
 
   // Show text header fields
   if (widget.properties.fontSize !== undefined) {
@@ -749,6 +753,12 @@ function showProperties(widget) {
     document.getElementById('prop-textalign').value = widget.properties.textAlign || 'left';
     document.getElementById('prop-fontweight-group').style.display = 'block';
     document.getElementById('prop-fontweight').value = widget.properties.fontWeight || 'bold';
+  }
+
+  // Show border toggle
+  if (widget.properties.showBorder !== undefined) {
+    document.getElementById('prop-showborder-group').style.display = 'block';
+    document.getElementById('prop-showborder').checked = widget.properties.showBorder || false;
   }
 
   // Show line fields
@@ -1054,6 +1064,10 @@ function onPropertyChange(e) {
       break;
     case 'prop-show-header':
       widget.properties.showHeader = e.target.checked;
+      renderWidgetPreview(widget);
+      break;
+    case 'prop-showborder':
+      widget.properties.showBorder = e.target.checked;
       renderWidgetPreview(widget);
       break;
     case 'prop-location':
