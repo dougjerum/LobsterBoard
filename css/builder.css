@@ -41,6 +41,10 @@
   font-size: calc(11px * var(--font-scale)) !important;
 }
 
+.canvas .dash-card-body {
+  font-size: calc(13px * var(--font-scale)) !important;
+}
+
 .canvas .uptime-row,
 .canvas .docker-row,
 .canvas .sys-row {

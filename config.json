@@ -245,37 +245,6 @@
       }
     },
     {
-      "id": "widget-19",
-      "type": "text-header",
-      "x": 20,
-      "y": 20,
-      "width": 400,
-      "height": 50,
-      "properties": {
-        "title": "My Dashboard",
-        "showHeader": false,
-        "showBorder": false,
-        "fontSize": 24,
-        "fontColor": "#e6edf3",
-        "textAlign": "left",
-        "fontWeight": "bold"
-      }
-    },
-    {
-      "id": "widget-20",
-      "type": "horizontal-line",
-      "x": 20,
-      "y": 40,
-      "width": 1880,
-      "height": 60,
-      "properties": {
-        "title": "",
-        "showHeader": false,
-        "lineColor": "#30363d",
-        "lineThickness": 2
-      }
-    },
-    {
       "id": "widget-21",
       "type": "vertical-line",
       "x": 920,

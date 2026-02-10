@@ -257,18 +257,23 @@ const WIDGETS = {
       <div style="font-size:11px;color:#8b949e;">Sleep Score</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}">
-        <div class="kpi-ring-wrap kpi-ring-sm">
-          <svg class="kpi-ring" viewBox="0 0 48 48">
-            <circle cx="24" cy="24" r="20" fill="none" stroke="var(--bg-tertiary)" stroke-width="4"/>
-            <circle id="${props.id}-ring" cx="24" cy="24" r="20" fill="none" stroke="var(--accent-green)" stroke-width="4"
-              stroke-dasharray="125.66" stroke-dashoffset="125.66" stroke-linecap="round"
-              transform="rotate(-90 24 24)" style="transition: stroke-dashoffset 0.6s ease;"/>
-          </svg>
-          <div class="kpi-ring-label" id="${props.id}-value">—</div>
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">😴 ${props.title || 'Sleep Score'}</span>
         </div>
-        <div class="kpi-data">
-          <div class="kpi-label">Sleep</div>
+        <div class="dash-card-body" style="display:flex;align-items:center;justify-content:center;gap:10px;">
+          <div class="kpi-ring-wrap kpi-ring-sm">
+            <svg class="kpi-ring" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" fill="none" stroke="var(--bg-tertiary)" stroke-width="4"/>
+              <circle id="${props.id}-ring" cx="24" cy="24" r="20" fill="none" stroke="var(--accent-green)" stroke-width="4"
+                stroke-dasharray="125.66" stroke-dashoffset="125.66" stroke-linecap="round"
+                transform="rotate(-90 24 24)" style="transition: stroke-dashoffset 0.6s ease;"/>
+            </svg>
+            <div class="kpi-ring-label" id="${props.id}-value">—</div>
+          </div>
+          <div class="kpi-data">
+            <div class="kpi-label">Sleep</div>
+          </div>
         </div>
       </div>`,
     generateJs: (props) => `
@@ -856,10 +861,14 @@ const WIDGETS = {
       <div style="font-size:10px;color:#8b949e;">tokens today</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}" style="flex-direction:column;text-align:center;">
-        <div style="color:#a371f7;font-size:12px;font-weight:600;">🟣 Claude</div>
-        <div class="kpi-value" id="${props.id}-tokens">—</div>
-        <div class="kpi-label" id="${props.id}-cost">tokens today</div>
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">🟣 ${props.title || 'Claude'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="kpi-value" id="${props.id}-tokens">—</div>
+          <div class="kpi-label" id="${props.id}-cost">tokens today</div>
+        </div>
       </div>`,
     generateJs: (props) => `
       // Claude Usage Widget: ${props.id}
@@ -905,10 +914,14 @@ const WIDGETS = {
       <div style="font-size:10px;color:#8b949e;">tokens today</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}" style="flex-direction:column;text-align:center;">
-        <div style="color:#3fb950;font-size:12px;font-weight:600;">🟢 GPT</div>
-        <div class="kpi-value" id="${props.id}-tokens">—</div>
-        <div class="kpi-label" id="${props.id}-cost">tokens today</div>
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">🟢 ${props.title || 'GPT'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="kpi-value" id="${props.id}-tokens">—</div>
+          <div class="kpi-label" id="${props.id}-cost">tokens today</div>
+        </div>
       </div>`,
     generateJs: (props) => `
       // GPT Usage Widget: ${props.id}
@@ -952,10 +965,14 @@ const WIDGETS = {
       <div style="font-size:10px;color:#8b949e;">tokens today</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}" style="flex-direction:column;text-align:center;">
-        <div style="color:#58a6ff;font-size:12px;font-weight:600;">🔵 Gemini</div>
-        <div class="kpi-value" id="${props.id}-tokens">—</div>
-        <div class="kpi-label" id="${props.id}-cost">tokens today</div>
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">🔵 ${props.title || 'Gemini'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="kpi-value" id="${props.id}-tokens">—</div>
+          <div class="kpi-label" id="${props.id}-cost">tokens today</div>
+        </div>
       </div>`,
     generateJs: (props) => `
       // Gemini Usage Widget: ${props.id}
@@ -1065,9 +1082,11 @@ const WIDGETS = {
       <div style="font-size:11px;color:#8b949e;">Today</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}">
-        <div class="kpi-icon">💰</div>
-        <div class="kpi-data">
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">💰 ${props.title || 'AI Costs'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;align-items:center;justify-content:center;gap:10px;">
           <div class="kpi-value green" id="${props.id}-cost">—</div>
           <div class="kpi-label">${props.period || 'Today'}</div>
         </div>
@@ -1168,9 +1187,11 @@ const WIDGETS = {
       <div style="font-size:11px;color:#8b949e;">Active</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}">
-        <div class="kpi-icon">💬</div>
-        <div class="kpi-data">
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">💬 ${props.title || 'Sessions'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;align-items:center;justify-content:center;gap:10px;">
           <div class="kpi-value blue" id="${props.id}-count">—</div>
           <div class="kpi-label">Active</div>
         </div>
@@ -1213,10 +1234,15 @@ const WIDGETS = {
       <div style="font-size:10px;color:#8b949e;">of 1M limit</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}" style="flex-direction:column;text-align:center;">
-        <div class="kpi-value" id="${props.id}-value">—</div>
-        <div class="gauge-bar"><div class="gauge-fill" id="${props.id}-fill"></div></div>
-        <div class="kpi-label">of ${((props.maxTokens || 1000000) / 1000000).toFixed(1)}M limit</div>
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">📊 ${props.title || 'Tokens'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="kpi-value" id="${props.id}-value">—</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="${props.id}-fill"></div></div>
+          <div class="kpi-label">of ${((props.maxTokens || 1000000) / 1000000).toFixed(1)}M limit</div>
+        </div>
       </div>`,
     generateJs: (props) => `
       // Token Gauge Widget: ${props.id}
@@ -1555,9 +1581,11 @@ const WIDGETS = {
       <div style="font-size:11px;color:#8b949e;">Unread</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}">
-        <div class="kpi-icon">📧</div>
-        <div class="kpi-data">
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">📧 ${props.title || 'Email'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;align-items:center;justify-content:center;gap:10px;">
           <div class="kpi-value red" id="${props.id}-count">—</div>
           <div class="kpi-label">Unread</div>
         </div>
@@ -1867,9 +1895,11 @@ const WIDGETS = {
       <div style="font-size:11px;color:#8b949e;">💧 45%</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}">
-        <div class="kpi-icon">🏠</div>
-        <div class="kpi-data">
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">🏠 ${props.title || 'Indoor'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;align-items:center;justify-content:center;gap:10px;">
           <div class="kpi-value" id="${props.id}-temp">—</div>
           <div class="kpi-label" id="${props.id}-humidity">💧 —%</div>
         </div>
@@ -1944,9 +1974,11 @@ const WIDGETS = {
       <div style="font-size:11px;color:#8b949e;">Current</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="kpi-card kpi-sm" id="widget-${props.id}">
-        <div class="kpi-icon">🔌</div>
-        <div class="kpi-data">
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">🔌 ${props.title || 'Power'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;align-items:center;justify-content:center;gap:10px;">
           <div class="kpi-value orange" id="${props.id}-watts">—</div>
           <div class="kpi-label">Current</div>
         </div>
@@ -1994,11 +2026,16 @@ const WIDGETS = {
       </div>
     </div>`,
     generateHtml: (props) => `
-      <div class="now-playing-card" id="widget-${props.id}">
-        <div class="np-art" id="${props.id}-art"></div>
-        <div class="np-info">
-          <div class="np-title" id="${props.id}-title">Not Playing</div>
-          <div class="np-artist" id="${props.id}-artist">—</div>
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">🎵 ${props.title || 'Now Playing'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;align-items:center;gap:12px;">
+          <div class="np-art" id="${props.id}-art"></div>
+          <div class="np-info">
+            <div class="np-title" id="${props.id}-title">Not Playing</div>
+            <div class="np-artist" id="${props.id}-artist">—</div>
+          </div>
         </div>
       </div>`,
     generateJs: (props) => `
@@ -2045,9 +2082,14 @@ const WIDGETS = {
       <div style="font-size:11px;color:#8b949e;margin-top:4px;">— Steve Jobs</div>
     </div>`,
     generateHtml: (props) => `
-      <div class="quote-card" id="widget-${props.id}">
-        <div class="quote-text" id="${props.id}-text">Loading quote...</div>
-        <div class="quote-author" id="${props.id}-author">—</div>
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">💭 ${props.title || 'Quote'}</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;flex-direction:column;justify-content:center;">
+          <div class="quote-text" id="${props.id}-text" style="font-style:italic;">Loading quote...</div>
+          <div class="quote-author" id="${props.id}-author" style="margin-top:8px;color:var(--text-muted);font-size:11px;">—</div>
+        </div>
       </div>`,
     generateJs: (props) => `
       // Quote of Day Widget: ${props.id}
