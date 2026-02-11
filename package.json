@@ -1,6 +1,6 @@
 {
   "name": "lobsterboard",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Dashboard builder library with customizable widgets for creating beautiful monitoring dashboards",
   "keywords": [
     "dashboard",
