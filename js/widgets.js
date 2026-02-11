@@ -2382,6 +2382,7 @@ const WIDGETS = {
     hasApiKey: false,
     properties: {
       title: 'Quick Links',
+      columns: 1,
       links: []
     },
     preview: `<div style="padding:4px;font-size:11px;">
@@ -2411,12 +2412,16 @@ const WIDGETS = {
           return;
         }
         
+        const cols = ${props.columns || 1};
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+        container.style.gap = '4px';
         container.innerHTML = links.map(link => {
           const domain = new URL(link.url).hostname;
           const favicon = 'https://www.google.com/s2/favicons?sz=32&domain=' + domain;
-          return '<a href="' + link.url + '" class="quick-link" target="_blank" style="display:flex;align-items:center;gap:8px;padding:8px 0;text-decoration:none;color:var(--text-primary);border-bottom:1px solid var(--border);">' +
-            '<img src="' + favicon + '" style="width:16px;height:16px;" onerror="this.style.display=\\'none\\'">' +
-            '<span>' + link.name + '</span>' +
+          return '<a href="' + link.url + '" class="quick-link" target="_blank" style="display:flex;align-items:center;gap:8px;padding:6px 4px;text-decoration:none;color:var(--text-primary);border-bottom:1px solid var(--border);overflow:hidden;">' +
+            '<img src="' + favicon + '" style="width:16px;height:16px;flex-shrink:0;" onerror="this.style.display=\\'none\\'">' +
+            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + link.name + '</span>' +
           '</a>';
         }).join('');
       })();
