@@ -910,6 +910,11 @@ function showProperties(widget) {
   if (template.hasApiKey) {
     document.getElementById('prop-api-group').style.display = 'block';
     document.getElementById('prop-api-key').value = template.apiKeyName || '';
+    const noteEl = document.getElementById('prop-api-note');
+    if (noteEl) {
+      noteEl.textContent = template.properties?.apiKeyNote || '';
+      noteEl.style.display = template.properties?.apiKeyNote ? 'block' : 'none';
+    }
   }
 
   // Show endpoint field
