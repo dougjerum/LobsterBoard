@@ -6,6 +6,8 @@ A self-hosted, drag-and-drop dashboard builder with 50 widgets, a template galle
 
 ![LobsterBoard](lobsterboard-logo-final.png)
 
+![LobsterBoard Dashboard](lobsterboard-screenshot.jpg)
+
 ## Quick Start
 
 ```bash
