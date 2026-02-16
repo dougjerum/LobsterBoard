@@ -1276,7 +1276,9 @@ const server = http.createServer(async (req, res) => {
 
         const sensitiveKeys = ['apiKey', 'api_key', 'token', 'secret', 'password'];
         const privateIpRegex = /^https?:\/\/(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|localhost|127\.0\.0\.1)/i;
-        const keepUrlKeys = ['icalUrl', 'feedUrl'];
+        // URLs that may contain private auth tokens — strip them in templates
+        const privateUrlKeys = ['icalUrl'];
+        const privateUrlPatterns = [/[?&/]private[-_]?[a-f0-9]/i, /caldav\.icloud\.com/i, /\/private\//i];
 
         function stripSensitive(props) {
           if (!props || typeof props !== 'object') return props;
@@ -1289,7 +1291,16 @@ const server = http.createServer(async (req, res) => {
             } else if ((key === 'url' || key === 'endpoint') && typeof result[key] === 'string' && privateIpRegex.test(result[key])) {
               result[key] = 'http://your-server:port/path';
               stripped = true;
-            } else if (!keepUrlKeys.includes(key) && typeof result[key] === 'object' && result[key] !== null) {
+            } else if (privateUrlKeys.includes(key) && typeof result[key] === 'string') {
+              // Always strip private calendar/feed URLs — they contain auth tokens
+              if (result[key] && (result[key].length > 0)) {
+                const hasPrivateToken = privateUrlPatterns.some(p => p.test(result[key]));
+                if (hasPrivateToken) {
+                  result[key] = '';
+                  stripped = true;
+                }
+              }
+            } else if (typeof result[key] === 'object' && result[key] !== null) {
               const inner = stripSensitive(result[key]);
               result[key] = inner.result;
               if (inner.stripped) stripped = true;
