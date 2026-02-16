@@ -5,3 +5,7 @@ data/
 *.log
 node_modules/
 .env
+
+# Security - never commit
+auth.json
+secrets.json

@@ -592,7 +592,6 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'POST' && pathname === '/api/mode') {
-    if (isPublicMode()) { sendJson(res, 403, { error: 'Cannot change mode while in public mode' }); return; }
     let body = '';
     req.on('data', c => body += c);
     req.on('end', () => {

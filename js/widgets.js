@@ -579,6 +579,7 @@ const WIDGETS = {
   // ─────────────────────────────────────────────
 
   'activity-list': {
+    privacyWarning: true,
     name: 'Activity List',
     icon: '📋',
     category: 'large',
@@ -649,6 +650,7 @@ const WIDGETS = {
   },
 
   'cron-jobs': {
+    privacyWarning: true,
     name: 'Cron Jobs',
     icon: '⏰',
     category: 'large',
@@ -723,6 +725,7 @@ const WIDGETS = {
   },
 
   'system-log': {
+    privacyWarning: true,
     name: 'System Log',
     icon: '🔧',
     category: 'large',
@@ -810,6 +813,7 @@ const WIDGETS = {
   },
 
   'calendar': {
+    privacyWarning: true,
     name: 'Calendar',
     icon: '📅',
     category: 'large',
@@ -1686,6 +1690,7 @@ const WIDGETS = {
   // ─────────────────────────────────────────────
 
   'todo-list': {
+    privacyWarning: true,
     name: 'Todo List',
     icon: '✅',
     category: 'large',

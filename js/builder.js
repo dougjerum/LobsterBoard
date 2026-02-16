@@ -60,6 +60,26 @@ function getScrollableCanvasHeight() {
 // PIN & PUBLIC MODE
 // ─────────────────────────────────────────────
 
+function addPublicUnlockButton() {
+  let unlock = document.getElementById('public-unlock');
+  if (unlock) return; // already exists
+  unlock = document.createElement('button');
+  unlock.id = 'public-unlock';
+  unlock.textContent = '🔒';
+  unlock.title = 'Admin';
+  unlock.style.cssText = 'position:fixed;bottom:8px;right:8px;z-index:9999;background:transparent;border:none;color:#6e7681;font-size:12px;cursor:pointer;opacity:0.3;transition:opacity .2s;padding:4px;';
+  unlock.addEventListener('mouseenter', () => unlock.style.opacity = '0.8');
+  unlock.addEventListener('mouseleave', () => unlock.style.opacity = '0.3');
+  unlock.addEventListener('click', () => {
+    if (state.hasPin) {
+      showPinModal('verify');
+    } else {
+      openSecurityModal();
+    }
+  });
+  document.body.appendChild(unlock);
+}
+
 async function checkAuthStatus() {
   try {
     const res = await fetch('/api/auth/status');
@@ -69,6 +89,7 @@ async function checkAuthStatus() {
     if (state.publicMode) {
       const editBtn = document.getElementById('btn-edit-layout');
       if (editBtn) editBtn.style.display = 'none';
+      addPublicUnlockButton();
     }
   } catch (e) { console.error('Auth status check failed:', e); }
 }
@@ -118,6 +139,12 @@ function closePinModal() {
   modal.style.display = 'none';
   // Restore visibility of new PIN input
   document.getElementById('pin-input').parentElement.style.display = '';
+  // Clear any pending public mode callback
+  if (state._publicModeCallback) {
+    state._publicModeCallback = null;
+    const toggle = document.getElementById('public-mode-toggle');
+    if (toggle) toggle.checked = state.publicMode;
+  }
 }
 
 async function submitPin() {
@@ -137,6 +164,28 @@ async function submitPin() {
     const data = await res.json();
     if (data.valid) {
       state.pinVerified = true;
+      // If there's a pending public mode toggle, handle that instead of entering edit mode
+      if (state._publicModeCallback) {
+        const callback = state._publicModeCallback;
+        state._publicModeCallback = null; // clear before closePinModal tries to
+        closePinModal();
+        await callback(pin);
+        return;
+      }
+      // If in public mode (unlock button clicked), disable it and restore edit UI
+      if (state.publicMode) {
+        state.publicMode = false;
+        await fetch('/api/mode', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publicMode: false, pin })
+        });
+        const editBtn = document.getElementById('btn-edit-layout');
+        if (editBtn) editBtn.style.display = '';
+        const unlock = document.getElementById('public-unlock');
+        if (unlock) unlock.remove();
+        const pubToggle = document.getElementById('public-mode-toggle');
+        if (pubToggle) pubToggle.checked = false;
+      }
       closePinModal();
       setEditMode(true);
     } else {
@@ -245,7 +294,7 @@ function setEditMode(enable) {
     document.querySelector('.canvas-grid').style.display = 'block'; // Show grid
     document.querySelector('.drop-hint').style.display = 'flex'; // Show drop hint
   } else {
-    editLayoutBtn.style.display = 'block';
+    editLayoutBtn.style.display = state.publicMode ? 'none' : 'block';
     saveBtn.textContent = '📦 Export ZIP';
     saveBtn.removeEventListener('click', saveConfig);
     saveBtn.addEventListener('click', exportDashboard);
@@ -530,29 +579,49 @@ document.addEventListener('DOMContentLoaded', () => {
     if (enable && !confirm('Enable Public Mode? This will hide the Edit button and block config APIs.')) {
       e.target.checked = false; return;
     }
-    const body = { publicMode: enable };
     if (state.hasPin) {
-      const pin = prompt('Enter your PIN to confirm:');
-      if (!pin) { e.target.checked = !enable; return; }
-      body.pin = pin;
-    }
-    const res = await fetch('/api/mode', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if (data.status === 'ok') {
-      state.publicMode = data.publicMode;
-      if (data.publicMode) {
-        setEditMode(false);
-        document.getElementById('btn-edit-layout').style.display = 'none';
-        document.getElementById('security-modal').style.display = 'none';
-      } else {
-        document.getElementById('btn-edit-layout').style.display = '';
-      }
+      // Use PIN modal instead of prompt() so input is masked
+      state._pendingPublicMode = enable;
+      document.getElementById('security-modal').style.display = 'none';
+      showPinModal('verify');
+      // Override the verify handler temporarily
+      state._publicModeCallback = async (pin) => {
+        const res = await fetch('/api/mode', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publicMode: enable, pin })
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          state.publicMode = data.publicMode;
+          state._publicModeCallback = null;
+          // Reload page for clean state
+          location.reload();
+          return;
+        } else {
+          e.target.checked = !enable;
+          alert(data.error || 'Failed to change mode');
+        }
+        state._publicModeCallback = null;
+      };
     } else {
-      e.target.checked = !enable;
-      alert(data.error || 'Failed to change mode');
+      const res = await fetch('/api/mode', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicMode: enable })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        state.publicMode = data.publicMode;
+        if (data.publicMode) {
+          setEditMode(false);
+          document.getElementById('btn-edit-layout').style.display = 'none';
+          document.getElementById('security-modal').style.display = 'none';
+        } else {
+          document.getElementById('btn-edit-layout').style.display = '';
+        }
+      } else {
+        e.target.checked = !enable;
+        alert(data.error || 'Failed to change mode');
+      }
     }
   });
 });
@@ -644,10 +713,23 @@ function updateCanvasInfo() {
 function initDragDrop() {
   const canvas = document.getElementById('canvas');
 
-  // Widget library items
+  // Widget library items — add privacy badges
   document.querySelectorAll('.widget-item').forEach(item => {
     item.addEventListener('dragstart', onDragStart);
     item.addEventListener('dragend', onDragEnd);
+    const widgetType = item.dataset.widget;
+    const widgetDef = WIDGETS[widgetType];
+    if (widgetDef && widgetDef.privacyWarning) {
+      const nameEl = item.querySelector('.widget-name');
+      if (nameEl && !nameEl.querySelector('.privacy-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'privacy-badge';
+        badge.textContent = ' ⚠️';
+        badge.title = 'May expose sensitive data when dashboard is public';
+        badge.style.cssText = 'font-size:10px;cursor:help;';
+        nameEl.appendChild(badge);
+      }
+    }
   });
 
   // Canvas drop zone
@@ -1311,6 +1393,22 @@ function showProperties(widget) {
     document.getElementById('prop-description-group').style.display = 'block';
   } else {
     document.getElementById('prop-description-group').style.display = 'none';
+  }
+
+  // Show privacy warning for sensitive widgets
+  let privWarn = document.getElementById('prop-privacy-warning');
+  if (!privWarn) {
+    privWarn = document.createElement('div');
+    privWarn.id = 'prop-privacy-warning';
+    privWarn.style.cssText = 'background:#2d1b00;border:1px solid #d29922;border-radius:6px;padding:8px 10px;margin:8px 0;font-size:11px;color:#d29922;display:none;line-height:1.4;';
+    const descGroup = document.getElementById('prop-description-group');
+    descGroup.parentNode.insertBefore(privWarn, descGroup.nextSibling);
+  }
+  if (template.privacyWarning) {
+    privWarn.innerHTML = '⚠️ <strong>Privacy Warning:</strong> This widget may display sensitive data (API keys, credentials, personal info) to anyone viewing your dashboard. Public Mode and PIN protection only prevent editing — they do <strong>not</strong> hide widget content.';
+    privWarn.style.display = 'block';
+  } else {
+    privWarn.style.display = 'none';
   }
 }
 
