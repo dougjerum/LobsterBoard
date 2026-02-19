@@ -856,12 +856,13 @@ const WIDGETS = {
             return;
           }
           function _escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+          function _linkify(s) { return _escHtml(s).replace(/(https?:\\/\\/[^\\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#58a6ff;text-decoration:underline;">$1</a>'); }
           container.innerHTML = events.map(function(ev) {
             var timeStr = ev.allDay ? 'All Day' : new Date(ev.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             return '<div style="padding:4px 0;border-bottom:1px solid #21262d;font-size:calc(13px * var(--font-scale, 1));">' +
               '<span style="color:#58a6ff;">' + timeStr + '</span> ' +
-              '<span style="color:#e6edf3;">' + _escHtml(ev.summary || 'Untitled') + '</span>' +
-              (ev.location ? '<div style="color:#8b949e;font-size:calc(11px * var(--font-scale, 1));margin-top:2px;">📍 ' + _escHtml(ev.location) + '</div>' : '') +
+              '<span style="color:#e6edf3;">' + _linkify(ev.summary || 'Untitled') + '</span>' +
+              (ev.location ? '<div style="color:#8b949e;font-size:calc(11px * var(--font-scale, 1));margin-top:2px;">📍 ' + _linkify(ev.location) + '</div>' : '') +
               '</div>';
           }).join('');
         } catch (e) {
