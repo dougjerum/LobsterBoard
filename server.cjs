@@ -420,22 +420,59 @@ function parseIcal(text, maxEvents) {
     const block = blocks[i].split('END:VEVENT')[0];
     if (!block) continue;
     const get = (key) => { const m = block.match(new RegExp('^' + key + '(?:;[^:]*)?:(.*)$', 'm')); return m ? m[1].trim() : ''; };
+    const getWithParams = (key) => { const m = block.match(new RegExp('^' + key + '((?:;[^:]*)?):(.*)$', 'm')); return m ? { params: m[1], value: m[2].trim() } : { params: '', value: '' }; };
     const summary = get('SUMMARY').replace(/\\,/g, ',').replace(/\\n/g, ' ');
     const location = get('LOCATION').replace(/\\,/g, ',').replace(/\\n/g, ' ');
     const dtstart = get('DTSTART');
-    const dtend = get('DTEND');
+    const dtstartFull = getWithParams('DTSTART');
+    const dtendFull = getWithParams('DTEND');
     if (!dtstart) continue;
     // Parse iCal date: 20260210T150000Z or 20260210 (all-day)
     const allDay = dtstart.length === 8;
-    const parseIcalDate = (s) => {
+    // Map Windows/iCal TZID names to UTC offset (hours). Covers common zones.
+    const tzOffsets = {
+      'eastern standard time': -5, 'eastern daylight time': -4, 'us/eastern': -5, 'america/new_york': -5,
+      'central standard time': -6, 'central daylight time': -5, 'us/central': -6, 'america/chicago': -6,
+      'central america standard time': -6,
+      'mountain standard time': -7, 'mountain daylight time': -6, 'us/mountain': -7, 'america/denver': -7,
+      'pacific standard time': -8, 'pacific daylight time': -7, 'us/pacific': -8, 'america/los_angeles': -8,
+      'pacific standard time (mexico)': -8,
+      'india standard time': 5.5, 'asia/kolkata': 5.5,
+      'sri lanka standard time': 5.5,
+      'singapore standard time': 8, 'asia/singapore': 8,
+      'china standard time': 8, 'asia/shanghai': 8,
+      'tokyo standard time': 9, 'asia/tokyo': 9,
+      'e. africa standard time': 3,
+      'romance standard time': 1,
+      'gmt standard time': 0, 'utc': 0, 'gmt': 0,
+      'w. europe standard time': 1, 'europe/berlin': 1, 'europe/paris': 1,
+    };
+    const parseIcalDate = (s, params) => {
       if (!s) return null;
       if (s.length === 8) return new Date(s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8) + 'T00:00:00');
       // 20260210T150000Z or 20260210T150000
       const d = s.replace(/Z$/, '');
-      return new Date(d.slice(0,4) + '-' + d.slice(4,6) + '-' + d.slice(6,8) + 'T' + d.slice(9,11) + ':' + d.slice(11,13) + ':' + d.slice(13,15) + (s.endsWith('Z') ? 'Z' : ''));
+      const iso = d.slice(0,4) + '-' + d.slice(4,6) + '-' + d.slice(6,8) + 'T' + d.slice(9,11) + ':' + d.slice(11,13) + ':' + d.slice(13,15);
+      if (s.endsWith('Z')) return new Date(iso + 'Z');
+      // Check for TZID parameter
+      const tzMatch = (params || '').match(/TZID=([^;:]+)/i);
+      if (tzMatch) {
+        const tzName = tzMatch[1].trim().toLowerCase();
+        const offsetHours = tzOffsets[tzName];
+        if (offsetHours !== undefined) {
+          // Convert from source timezone to UTC by appending the UTC offset
+          const sign = offsetHours >= 0 ? '+' : '-';
+          const absH = Math.floor(Math.abs(offsetHours));
+          const absM = Math.round((Math.abs(offsetHours) - absH) * 60);
+          const offsetStr = sign + String(absH).padStart(2, '0') + ':' + String(absM).padStart(2, '0');
+          return new Date(iso + offsetStr);
+        }
+      }
+      // No timezone info — treat as local
+      return new Date(iso);
     };
-    const start = parseIcalDate(dtstart);
-    const end = parseIcalDate(dtend);
+    const start = parseIcalDate(dtstart, dtstartFull.params);
+    const end = parseIcalDate(dtendFull.value, dtendFull.params);
     if (!start || isNaN(start.getTime())) continue;
     // Only future events (for all-day, include today)
     const cutoff = allDay ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : now;
