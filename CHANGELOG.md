@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.5] - 2026-02-19
+
+### Fixed
+- **iCal timezone parsing** — calendar events now display at correct times regardless of timezone (TZID parameter support) — thanks @jlgrimes!
+
+### Added
+- **Clickable URLs in calendar** — Zoom/Teams links in event summaries and locations are now hyperlinks — thanks @jlgrimes!
+
+## [0.2.4] - 2026-02-17
+
+### Fixed
+- SSRF vulnerability in RSS feed proxy (thanks @jlgrimes for the security report!)
+
 ## [0.2.3] - 2026-02-16
 
 ### Added
