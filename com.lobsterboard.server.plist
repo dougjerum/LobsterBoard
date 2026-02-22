@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.lobsterboard.server</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>exec /Users/douglasjerum/Documents/Coding/LobsterBoard/start.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/douglasjerum/Documents/Coding/LobsterBoard</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Users/douglasjerum</string>
+    </dict>
+
+    <!-- Auto-start on login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Restart if the process exits (crash recovery) -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- Wait 5s before restarting after crash -->
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <!-- Logs -->
+    <key>StandardOutPath</key>
+    <string>/tmp/lobsterboard.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/lobsterboard.err</string>
+</dict>
+</plist>
