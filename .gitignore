@@ -9,3 +9,7 @@ node_modules/
 # Security - never commit
 auth.json
 secrets.json
+.openclaw-device-identity.json
+
+# Dev/test utilities
+test-ws.cjs

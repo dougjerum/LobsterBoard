@@ -11,9 +11,177 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const si = require('systeminformation');
+const crypto = require('crypto');
+const WebSocket = require('ws');
 
 const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '127.0.0.1';
+
+// ─────────────────────────────────────────────
+// OpenClaw WebSocket RPC Client
+// Connects to OpenClaw gateway over SSH tunnel
+// ─────────────────────────────────────────────
+const OC_WS_URL = process.env.OPENCLAW_WS_URL || 'ws://127.0.0.1:18789';
+const OC_TOKEN = process.env.OPENCLAW_TOKEN || '';
+const OC_IDENTITY_FILE = path.join(__dirname, '.openclaw-device-identity.json');
+const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
+
+function _b64url(buf) { return Buffer.from(buf).toString('base64url'); }
+
+function _ocLoadIdentity() {
+  try {
+    const data = JSON.parse(fs.readFileSync(OC_IDENTITY_FILE, 'utf8'));
+    if (data.deviceId && data.publicKeyPem && data.privateKeyPem) {
+      const pub = crypto.createPublicKey(data.publicKeyPem);
+      const spki = pub.export({ type: 'spki', format: 'der' });
+      data.rawPubKeyBase64Url = _b64url(spki.subarray(ED25519_SPKI_PREFIX.length));
+      return data;
+    }
+  } catch {}
+  return null;
+}
+
+function _ocBuildAuthPayload(p) {
+  const v = p.nonce ? 'v2' : 'v1';
+  const base = [v, p.deviceId, p.clientId, p.clientMode, p.role, p.scopes.join(','), String(p.signedAtMs), p.token || ''];
+  if (v === 'v2') base.push(p.nonce || '');
+  return base.join('|');
+}
+
+function _ocSign(privPem, payload) {
+  return _b64url(crypto.sign(null, Buffer.from(payload, 'utf8'), crypto.createPrivateKey(privPem)));
+}
+
+const _ocIdentity = _ocLoadIdentity();
+let _ocWs = null;
+let _ocAuthenticated = false;
+let _ocPending = new Map(); // id -> { resolve, timer }
+let _ocReconnectTimer = null;
+
+function ocConnect() {
+  if (!_ocIdentity || !OC_TOKEN) {
+    console.log('[openclaw] No identity or token — WS client disabled');
+    return;
+  }
+  if (_ocWs) return;
+
+  try {
+    _ocWs = new WebSocket(OC_WS_URL, { headers: { 'Origin': 'http://127.0.0.1:18789' } });
+  } catch (e) {
+    console.log('[openclaw] WS connect error:', e.message);
+    _ocScheduleReconnect();
+    return;
+  }
+
+  _ocWs.on('open', () => console.log('[openclaw] WS connected'));
+
+  _ocWs.on('message', (raw) => {
+    let msg;
+    try { msg = JSON.parse(raw.toString()); } catch { return; }
+
+    // Handle challenge → send connect with device identity
+    if (msg.type === 'event' && msg.event === 'connect.challenge') {
+      const role = 'operator';
+      const clientId = 'webchat-ui';
+      const clientMode = 'ui';
+      const scopes = ['operator.admin', 'operator.approvals', 'operator.pairing'];
+      const signedAtMs = Date.now();
+      const nonce = msg.payload?.nonce;
+      const payload = _ocBuildAuthPayload({ deviceId: _ocIdentity.deviceId, clientId, clientMode, role, scopes, signedAtMs, token: OC_TOKEN, nonce });
+      const signature = _ocSign(_ocIdentity.privateKeyPem, payload);
+      _ocWs.send(JSON.stringify({
+        type: 'req', id: crypto.randomUUID(), method: 'connect',
+        params: {
+          minProtocol: 3, maxProtocol: 3,
+          client: { id: clientId, displayName: 'LobsterBoard', version: '1.0.0', platform: 'darwin', mode: clientMode, instanceId: crypto.randomUUID() },
+          role, scopes, caps: [],
+          auth: { token: OC_TOKEN },
+          device: { id: _ocIdentity.deviceId, publicKey: _ocIdentity.rawPubKeyBase64Url, signature, signedAt: signedAtMs, nonce },
+          userAgent: 'LobsterBoard/1.0', locale: 'en-US'
+        }
+      }));
+      return;
+    }
+
+    // Handle connect response
+    if (msg.type === 'res' && !_ocAuthenticated) {
+      if (msg.ok) {
+        _ocAuthenticated = true;
+        console.log('[openclaw] Authenticated — scopes:', msg.payload?.auth?.scopes?.join(', '));
+      } else {
+        console.log('[openclaw] Connect failed:', msg.error?.message || JSON.stringify(msg.error));
+      }
+      return;
+    }
+
+    // Handle RPC responses
+    if (msg.type === 'res') {
+      const p = _ocPending.get(msg.id);
+      if (p) {
+        clearTimeout(p.timer);
+        _ocPending.delete(msg.id);
+        p.resolve(msg);
+      }
+    }
+  });
+
+  _ocWs.on('close', () => {
+    console.log('[openclaw] WS closed');
+    _ocCleanup();
+    _ocScheduleReconnect();
+  });
+
+  _ocWs.on('error', (e) => {
+    console.log('[openclaw] WS error:', e.message);
+    _ocCleanup();
+    _ocScheduleReconnect();
+  });
+}
+
+function _ocCleanup() {
+  _ocAuthenticated = false;
+  _ocWs = null;
+  // Reject all pending requests
+  for (const [, p] of _ocPending) {
+    clearTimeout(p.timer);
+    p.resolve({ ok: false, error: { message: 'connection lost' } });
+  }
+  _ocPending.clear();
+}
+
+function _ocScheduleReconnect() {
+  if (_ocReconnectTimer) return;
+  _ocReconnectTimer = setTimeout(() => {
+    _ocReconnectTimer = null;
+    ocConnect();
+  }, 5000);
+}
+
+/** Send an RPC request to OpenClaw, returns a promise that resolves to the response */
+function ocRpc(method, params = {}, timeoutMs = 10000) {
+  return new Promise((resolve) => {
+    if (!_ocWs || !_ocAuthenticated) {
+      resolve({ ok: false, error: { message: 'not connected' } });
+      return;
+    }
+    const id = crypto.randomUUID();
+    const timer = setTimeout(() => {
+      _ocPending.delete(id);
+      resolve({ ok: false, error: { message: 'timeout' } });
+    }, timeoutMs);
+    _ocPending.set(id, { resolve, timer });
+    try {
+      _ocWs.send(JSON.stringify({ type: 'req', id, method, params }));
+    } catch (e) {
+      clearTimeout(timer);
+      _ocPending.delete(id);
+      resolve({ ok: false, error: { message: e.message } });
+    }
+  });
+}
+
+// Boot the OpenClaw WS client
+ocConnect();
 
 // ─────────────────────────────────────────────
 // Pages System — auto-discovery and mounting
@@ -300,7 +468,6 @@ const SECRETS_FILE = path.join(__dirname, 'secrets.json');
 // ─────────────────────────────────────────────
 // Security helpers
 // ─────────────────────────────────────────────
-const crypto = require('crypto');
 
 function hashPin(pin) {
   return crypto.createHash('sha256').update(pin).digest('hex');
@@ -813,27 +980,29 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // GET /api/cron - Read cron jobs from OpenClaw cron store
+  // GET /api/cron - Cron jobs from OpenClaw via WS RPC
   if (req.method === 'GET' && pathname === '/api/cron') {
-    const cronFile = path.join(os.homedir(), '.openclaw', 'cron', 'jobs.json');
-    fs.readFile(cronFile, 'utf8', (err, data) => {
-      if (err) {
-        if (err.code === 'ENOENT') return sendJson(res, 200, { jobs: [] });
-        return sendError(res, err.message);
-      }
+    (async () => {
       try {
-        const parsed = JSON.parse(data);
-        const jobs = (parsed.jobs || []).map(j => ({
-          name: j.name,
-          schedule: j.schedule?.expr || '—',
-          tz: j.schedule?.tz || '',
-          enabled: j.enabled,
+        const result = await ocRpc('cron.list', {});
+        if (!result.ok) {
+          sendJson(res, 200, { jobs: [] });
+          return;
+        }
+        const raw = result.payload?.jobs || result.payload || [];
+        const jobs = (Array.isArray(raw) ? raw : []).map(j => ({
+          name: j.name || j.label || j.jobId || '?',
+          schedule: j.schedule?.expr || j.schedule || j.cron || '—',
+          tz: j.schedule?.tz || j.tz || '',
+          enabled: j.enabled !== false,
           lastRun: j.state?.lastRunAtMs ? new Date(j.state.lastRunAtMs).toISOString() : null,
           lastStatus: j.state?.lastStatus || null
         }));
         sendJson(res, 200, { jobs });
-      } catch (e) { sendError(res, e.message); }
-    });
+      } catch (e) {
+        sendError(res, e.message);
+      }
+    })();
     return;
   }
 
@@ -910,7 +1079,23 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET /api/releases - OpenClaw release info (cached 1hr)
+  // GET /api/sessions - Active sessions from OpenClaw via WS RPC
+  if (req.method === 'GET' && pathname === '/api/sessions') {
+    (async () => {
+      try {
+        const result = await ocRpc('sessions.list', {});
+        const raw = result.payload?.sessions || result.payload || [];
+        const sessions = Array.isArray(raw) ? raw : [];
+        const active = sessions.filter(s => s.status === 'active' || s.active !== false).length;
+        sendJson(res, 200, { data: { active, total: sessions.length, sessions } });
+      } catch (e) {
+        sendJson(res, 200, { data: { active: 0, total: 0, sessions: [] }, error: e.message });
+      }
+    })();
+    return;
+  }
+
+  // GET /api/releases - OpenClaw release info via WS RPC + GitHub (cached 1hr)
   if (req.method === 'GET' && pathname === '/api/releases') {
     const now = Date.now();
     if (_releaseCache && (now - _releaseCacheTime) < 3600000) {
@@ -919,20 +1104,15 @@ const server = http.createServer(async (req, res) => {
     }
     (async () => {
       try {
+        // Get running version from OpenClaw via WS RPC
         let currentVersion = 'unknown';
         try {
-          // Use process.execPath to find the node binary's lib directory
-          const nodeDir = path.dirname(path.dirname(process.execPath)); // e.g. /Users/x/.nvm/versions/node/v24.13.0
-          const candidates = [
-            path.join(nodeDir, 'lib/node_modules/openclaw/package.json'),
-            path.join(os.homedir(), '.nvm/versions/node', process.version, 'lib/node_modules/openclaw/package.json'),
-            '/usr/local/lib/node_modules/openclaw/package.json'
-          ];
-          for (const cand of candidates) {
-            try {
-              currentVersion = JSON.parse(fs.readFileSync(cand, 'utf8')).version;
-              break;
-            } catch (_) {}
+          const cfg = await ocRpc('config.get', {});
+          if (cfg.ok && cfg.payload) {
+            const v = cfg.payload.parsed?.meta?.lastTouchedVersion
+                   || cfg.payload.resolved?.meta?.lastTouchedVersion
+                   || cfg.payload.config?.meta?.lastTouchedVersion;
+            if (v) currentVersion = v;
           }
         } catch (_) {}
 
