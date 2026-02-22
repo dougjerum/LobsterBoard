@@ -1024,16 +1024,27 @@ const server = http.createServer(async (req, res) => {
       (async () => {
         try {
           const qs = new URL(req.url, 'http://localhost').searchParams;
-          let apiPath = '/tasks';
-          const params = [];
-          if (qs.get('filter')) params.push('filter=' + encodeURIComponent(qs.get('filter')));
-          if (qs.get('project_id')) params.push('project_id=' + encodeURIComponent(qs.get('project_id')));
-          if (qs.get('label')) params.push('label=' + encodeURIComponent(qs.get('label')));
-          if (params.length) apiPath += '?' + params.join('&');
-          const resp = await todoistReq('GET', apiPath);
-          // v1 API returns { results: [...], next_cursor } — unwrap
-          const tasks = Array.isArray(resp) ? resp : (resp.results || []);
-          sendJson(res, 200, tasks);
+          const baseParams = [];
+          if (qs.get('filter')) baseParams.push('filter=' + encodeURIComponent(qs.get('filter')));
+          if (qs.get('project_id')) baseParams.push('project_id=' + encodeURIComponent(qs.get('project_id')));
+          if (qs.get('label')) baseParams.push('label=' + encodeURIComponent(qs.get('label')));
+          // Paginate through all results (v1 API uses next_cursor)
+          let allTasks = [];
+          let cursor = null;
+          do {
+            const params = [...baseParams];
+            if (cursor) params.push('cursor=' + encodeURIComponent(cursor));
+            const apiPath = '/tasks' + (params.length ? '?' + params.join('&') : '');
+            const resp = await todoistReq('GET', apiPath);
+            if (Array.isArray(resp)) {
+              allTasks = allTasks.concat(resp);
+              cursor = null; // flat array = no pagination
+            } else {
+              allTasks = allTasks.concat(resp.results || []);
+              cursor = resp.next_cursor || null;
+            }
+          } while (cursor);
+          sendJson(res, 200, allTasks);
         } catch (e) { sendError(res, e.message); }
       })();
       return;
