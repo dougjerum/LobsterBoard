@@ -23,7 +23,7 @@ const HOST = process.env.HOST || '127.0.0.1';
 // Connects to OpenClaw gateway over SSH tunnel
 // ─────────────────────────────────────────────
 const OC_WS_URL = process.env.OPENCLAW_WS_URL || 'ws://127.0.0.1:18789';
-const OC_TOKEN = process.env.OPENCLAW_TOKEN || '';
+let OC_TOKEN = process.env.OPENCLAW_TOKEN || '';
 const OC_IDENTITY_FILE = path.join(__dirname, '.openclaw-device-identity.json');
 const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 
@@ -54,6 +54,10 @@ function _ocSign(privPem, payload) {
 }
 
 const _ocIdentity = _ocLoadIdentity();
+// Fall back to deviceToken from identity file if env var not set
+if (!OC_TOKEN && _ocIdentity && _ocIdentity.deviceToken) {
+  OC_TOKEN = _ocIdentity.deviceToken;
+}
 let _ocWs = null;
 let _ocAuthenticated = false;
 let _ocPending = new Map(); // id -> { resolve, timer }
