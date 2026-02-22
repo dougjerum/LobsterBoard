@@ -1781,6 +1781,235 @@ const WIDGETS = {
     `
   },
 
+  'todoist': {
+    name: 'Todoist',
+    icon: '📋',
+    category: 'large',
+    description: 'Bidirectional Todoist integration. View, create, complete, and delete tasks grouped by project. Requires TODOIST_API_TOKEN env var on server.',
+    defaultWidth: 380,
+    defaultHeight: 450,
+    hasApiKey: false,
+    properties: {
+      title: 'Todoist',
+      filter: 'today',
+      project_id: '',
+      pollInterval: '30'
+    },
+    preview: `<div style="padding:4px;font-size:11px;">
+      <div style="font-weight:600;opacity:0.6;margin-bottom:2px;">Project A</div>
+      <div style="color:#d1453b;">  ☐ P1 Urgent task</div>
+      <div style="color:#eb8909;">  ☐ P2 High priority</div>
+      <div style="font-weight:600;opacity:0.6;margin-top:4px;margin-bottom:2px;">Project B</div>
+      <div>  ☐ Normal task</div>
+    </div>`,
+    generateHtml: (props) => `
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">${props.title || 'Todoist'}</span>
+          <span class="dash-card-badge" id="${props.id}-badge">0</span>
+        </div>
+        <div class="dash-card-body" style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+          <div style="display:flex;gap:6px;padding:0 0 8px 0;flex-shrink:0;">
+            <input type="text" id="${props.id}-input" placeholder="Add a task..." style="flex:1;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-primary);font-size:calc(12px * var(--font-scale, 1));">
+            <button id="${props.id}-add-btn" style="background:var(--accent-blue);color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:calc(12px * var(--font-scale, 1));">Add</button>
+          </div>
+          <div id="${props.id}-list" style="flex:1;overflow-y:auto;"></div>
+          <div id="${props.id}-status" style="font-size:calc(10px * var(--font-scale, 1));color:var(--text-secondary);padding-top:4px;flex-shrink:0;"></div>
+        </div>
+      </div>`,
+    generateJs: (props) => `
+      // Todoist Widget: ${props.id}
+      (function() {
+        var tasks = [];
+        var projectMap = {};
+        var loading = false;
+        var container = document.getElementById('${props.id}-list');
+        var input = document.getElementById('${props.id}-input');
+        var addBtn = document.getElementById('${props.id}-add-btn');
+        var badge = document.getElementById('${props.id}-badge');
+        var statusEl = document.getElementById('${props.id}-status');
+        var filter = ${JSON.stringify(props.filter || 'today')};
+        var projectId = ${JSON.stringify(props.project_id || '')};
+        var pollMs = ${parseInt(props.pollInterval || '30', 10) * 1000};
+
+        var PRIORITY_COLORS = { 4: '#d1453b', 3: '#eb8909', 2: '#246fe0', 1: 'inherit' };
+        var PRIORITY_LABELS = { 4: 'P1', 3: 'P2', 2: 'P3', 1: '' };
+
+        function todayStr() {
+          var d = new Date();
+          return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+
+        function render() {
+          badge.textContent = tasks.length;
+          container.textContent = '';
+          if (!tasks.length) {
+            var emptyMsg = document.createElement('div');
+            emptyMsg.style.cssText = 'text-align:center;opacity:0.5;padding:20px;font-size:calc(12px * var(--font-scale, 1))';
+            emptyMsg.textContent = 'No tasks for today';
+            container.appendChild(emptyMsg);
+            return;
+          }
+
+          // Group by project
+          var groups = {};
+          var groupOrder = [];
+          tasks.forEach(function(t) {
+            var pid = t.project_id || '_none';
+            if (!groups[pid]) {
+              groups[pid] = [];
+              groupOrder.push(pid);
+            }
+            groups[pid].push(t);
+          });
+
+          groupOrder.forEach(function(pid) {
+            var projName = projectMap[pid] || 'Other';
+
+            // Project header
+            var header = document.createElement('div');
+            header.style.cssText = 'font-size:calc(11px * var(--font-scale, 1));font-weight:600;color:var(--text-secondary);padding:8px 0 4px 0;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)';
+            header.textContent = projName + ' (' + groups[pid].length + ')';
+            container.appendChild(header);
+
+            // Tasks within group — sorted by priority desc
+            groups[pid].sort(function(a, b) { return b.priority - a.priority; });
+            groups[pid].forEach(function(t) {
+              var pColor = PRIORITY_COLORS[t.priority] || 'inherit';
+              var pLabel = PRIORITY_LABELS[t.priority] || '';
+
+              var row = document.createElement('div');
+              row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 0 4px 8px;font-size:calc(13px * var(--font-scale, 1));border-bottom:1px solid color-mix(in srgb, var(--border) 50%, transparent)';
+
+              var cb = document.createElement('input');
+              cb.type = 'checkbox';
+              cb.dataset.close = t.id;
+              cb.style.cssText = 'cursor:pointer;flex-shrink:0;accent-color:' + pColor;
+              row.appendChild(cb);
+
+              if (pLabel) {
+                var pl = document.createElement('span');
+                pl.style.cssText = 'color:' + pColor + ';font-weight:600;font-size:calc(10px * var(--font-scale, 1));flex-shrink:0';
+                pl.textContent = pLabel;
+                row.appendChild(pl);
+              }
+
+              var content = document.createElement('span');
+              content.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:' + (t.priority > 1 ? pColor : 'var(--text-primary)');
+              content.textContent = t.content;
+              row.appendChild(content);
+
+              var del = document.createElement('button');
+              del.dataset.del = t.id;
+              del.style.cssText = 'background:none;border:none;color:var(--accent-red,#f85149);cursor:pointer;font-size:calc(14px * var(--font-scale, 1));padding:0 4px;flex-shrink:0;opacity:0.4';
+              del.title = 'Delete';
+              del.textContent = String.fromCharCode(10005);
+              del.onmouseenter = function() { this.style.opacity = '1'; };
+              del.onmouseleave = function() { this.style.opacity = '0.4'; };
+              row.appendChild(del);
+
+              container.appendChild(row);
+            });
+          });
+        }
+
+        async function fetchProjects() {
+          try {
+            var r = await fetch('/api/todoist/projects');
+            var data = await r.json();
+            if (Array.isArray(data)) {
+              data.forEach(function(p) { projectMap[p.id] = p.name; });
+            }
+          } catch (_) {}
+        }
+
+        async function fetchTasks() {
+          if (loading) return;
+          loading = true;
+          statusEl.textContent = 'Syncing...';
+          try {
+            var url = '/api/todoist/tasks?filter=' + encodeURIComponent(filter);
+            if (projectId) url += '&project_id=' + encodeURIComponent(projectId);
+            var r = await fetch(url);
+            var data = await r.json();
+            var all = Array.isArray(data) ? data : [];
+            // Only keep tasks with a due date matching today
+            var today = todayStr();
+            tasks = all.filter(function(t) {
+              if (!t.due) return false;
+              var d = t.due.date || '';
+              if (t.due.datetime) d = t.due.datetime.slice(0, 10);
+              return d === today;
+            });
+            render();
+            statusEl.textContent = tasks.length + ' tasks' + String.fromCharCode(160) + String.fromCharCode(183) + String.fromCharCode(160) + new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+          } catch (e) {
+            statusEl.textContent = 'Error: ' + e.message;
+          }
+          loading = false;
+        }
+
+        // Complete task
+        container.addEventListener('change', async function(e) {
+          var taskId = e.target.dataset.close;
+          if (!taskId) return;
+          e.target.disabled = true;
+          try {
+            await fetch('/api/todoist/tasks/' + taskId + '/close', { method: 'POST' });
+            tasks = tasks.filter(function(t) { return t.id !== taskId; });
+            render();
+          } catch (_) { e.target.checked = false; }
+          e.target.disabled = false;
+        });
+
+        // Delete task
+        container.addEventListener('click', async function(e) {
+          var taskId = e.target.dataset.del;
+          if (!taskId) return;
+          e.target.disabled = true;
+          try {
+            await fetch('/api/todoist/tasks/' + taskId, { method: 'DELETE' });
+            tasks = tasks.filter(function(t) { return t.id !== taskId; });
+            render();
+          } catch (_) {}
+        });
+
+        // Add task
+        async function addTask() {
+          var text = input.value.trim();
+          if (!text) return;
+          addBtn.disabled = true;
+          input.disabled = true;
+          try {
+            var payload = { content: text, due_string: 'today' };
+            if (projectId) payload.project_id = projectId;
+            var r = await fetch('/api/todoist/tasks', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            var newTask = await r.json();
+            if (newTask.id) {
+              tasks.push(newTask);
+              input.value = '';
+              render();
+            }
+          } catch (e) { statusEl.textContent = 'Add failed: ' + e.message; }
+          addBtn.disabled = false;
+          input.disabled = false;
+          input.focus();
+        }
+
+        addBtn.addEventListener('click', addTask);
+        input.addEventListener('keydown', function(e) { if (e.key === 'Enter') addTask(); });
+
+        // Init: fetch projects then tasks, then poll
+        fetchProjects().then(function() { fetchTasks(); });
+        setInterval(fetchTasks, pollMs);
+      })();
+    `
+  },
+
   'email-count': {
     name: 'Unread Emails',
     icon: '📧',

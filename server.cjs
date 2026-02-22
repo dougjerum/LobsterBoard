@@ -7,6 +7,7 @@
  */
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -978,6 +979,141 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+  }
+
+  // ── Todoist API v1 proxy ─────────────────────────────────
+  const TODOIST_TOKEN = process.env.TODOIST_API_TOKEN || '';
+  if (pathname.startsWith('/api/todoist/')) {
+    if (!TODOIST_TOKEN) { sendError(res, 'TODOIST_API_TOKEN not set', 503); return; }
+
+    // Parse: /api/todoist/tasks, /api/todoist/tasks/12345, /api/todoist/tasks/12345/close
+    const sub = pathname.slice('/api/todoist'.length); // e.g. "/tasks" or "/tasks/123/close"
+
+    function todoistReq(method, apiPath, body) {
+      return new Promise((resolve, reject) => {
+        const opts = {
+          hostname: 'api.todoist.com',
+          path: '/api/v1' + apiPath,
+          method,
+          headers: {
+            'Authorization': 'Bearer ' + TODOIST_TOKEN,
+            'Content-Type': 'application/json'
+          }
+        };
+        const r = https.request(opts, (resp) => {
+          let data = '';
+          resp.on('data', c => { data += c; });
+          resp.on('end', () => {
+            if (resp.statusCode === 204) return resolve({ _status: 204 });
+            try { resolve(JSON.parse(data)); }
+            catch (_) { resolve({ _raw: data, _status: resp.statusCode }); }
+          });
+        });
+        r.on('error', reject);
+        if (body) r.write(JSON.stringify(body));
+        r.end();
+      });
+    }
+
+    // GET /api/todoist/tasks?filter=...&project_id=...
+    if (req.method === 'GET' && sub === '/tasks') {
+      (async () => {
+        try {
+          const qs = new URL(req.url, 'http://localhost').searchParams;
+          let apiPath = '/tasks';
+          const params = [];
+          if (qs.get('filter')) params.push('filter=' + encodeURIComponent(qs.get('filter')));
+          if (qs.get('project_id')) params.push('project_id=' + encodeURIComponent(qs.get('project_id')));
+          if (qs.get('label')) params.push('label=' + encodeURIComponent(qs.get('label')));
+          if (params.length) apiPath += '?' + params.join('&');
+          const resp = await todoistReq('GET', apiPath);
+          // v1 API returns { results: [...], next_cursor } — unwrap
+          const tasks = Array.isArray(resp) ? resp : (resp.results || []);
+          sendJson(res, 200, tasks);
+        } catch (e) { sendError(res, e.message); }
+      })();
+      return;
+    }
+
+    // POST /api/todoist/tasks - Create task
+    if (req.method === 'POST' && sub === '/tasks') {
+      let body = '';
+      req.on('data', c => { body += c; });
+      req.on('end', async () => {
+        try {
+          const payload = JSON.parse(body);
+          const result = await todoistReq('POST', '/tasks', payload);
+          sendJson(res, 200, result);
+        } catch (e) { sendError(res, e.message); }
+      });
+      return;
+    }
+
+    // POST /api/todoist/tasks/:id/close
+    const closeMatch = sub.match(/^\/tasks\/([^/]+)\/close$/);
+    if (req.method === 'POST' && closeMatch) {
+      (async () => {
+        try {
+          await todoistReq('POST', '/tasks/' + closeMatch[1] + '/close');
+          sendJson(res, 200, { ok: true });
+        } catch (e) { sendError(res, e.message); }
+      })();
+      return;
+    }
+
+    // POST /api/todoist/tasks/:id/reopen
+    const reopenMatch = sub.match(/^\/tasks\/([^/]+)\/reopen$/);
+    if (req.method === 'POST' && reopenMatch) {
+      (async () => {
+        try {
+          await todoistReq('POST', '/tasks/' + reopenMatch[1] + '/reopen');
+          sendJson(res, 200, { ok: true });
+        } catch (e) { sendError(res, e.message); }
+      })();
+      return;
+    }
+
+    // DELETE /api/todoist/tasks/:id
+    const delMatch = sub.match(/^\/tasks\/([^/]+)$/);
+    if (req.method === 'DELETE' && delMatch) {
+      (async () => {
+        try {
+          await todoistReq('DELETE', '/tasks/' + delMatch[1]);
+          sendJson(res, 200, { ok: true });
+        } catch (e) { sendError(res, e.message); }
+      })();
+      return;
+    }
+
+    // POST /api/todoist/tasks/:id - Update task
+    const updateMatch = sub.match(/^\/tasks\/([^/]+)$/);
+    if (req.method === 'POST' && updateMatch) {
+      let body = '';
+      req.on('data', c => { body += c; });
+      req.on('end', async () => {
+        try {
+          const payload = JSON.parse(body);
+          const result = await todoistReq('POST', '/tasks/' + updateMatch[1], payload);
+          sendJson(res, 200, result);
+        } catch (e) { sendError(res, e.message); }
+      });
+      return;
+    }
+
+    // GET /api/todoist/projects
+    if (req.method === 'GET' && sub === '/projects') {
+      (async () => {
+        try {
+          const resp = await todoistReq('GET', '/projects');
+          const projects = Array.isArray(resp) ? resp : (resp.results || []);
+          sendJson(res, 200, projects);
+        } catch (e) { sendError(res, e.message); }
+      })();
+      return;
+    }
+
+    sendError(res, 'Not found', 404);
+    return;
   }
 
   // GET /api/cron - Cron jobs from OpenClaw via WS RPC
