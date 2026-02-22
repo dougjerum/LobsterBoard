@@ -8,12 +8,11 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>-c</string>
-        <string>exec /Users/douglasjerum/Documents/Coding/LobsterBoard/start.sh</string>
+        <string>/Users/douglasjerum/lobsterboard/start.sh</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/douglasjerum/Documents/Coding/LobsterBoard</string>
+    <string>/Users/douglasjerum/lobsterboard</string>
 
     <key>EnvironmentVariables</key>
     <dict>
@@ -27,7 +26,7 @@
     <key>RunAtLoad</key>
     <true/>
 
-    <!-- Restart if the process exits (crash recovery) -->
+    <!-- Restart if bash itself crashes (node restarts are handled by start.sh) -->
     <key>KeepAlive</key>
     <dict>
         <key>SuccessfulExit</key>
@@ -40,8 +39,8 @@
 
     <!-- Logs -->
     <key>StandardOutPath</key>
-    <string>/tmp/lobsterboard.log</string>
+    <string>/private/tmp/lobsterboard.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/lobsterboard.err</string>
+    <string>/private/tmp/lobsterboard.err</string>
 </dict>
 </plist>
