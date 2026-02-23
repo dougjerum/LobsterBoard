@@ -37,6 +37,7 @@ log "LobsterBoard starting (pid $$)..."
 if [ -f "$SCRIPT_DIR/.env" ]; then
   source "$SCRIPT_DIR/.env" || true
   export TODOIST_API_TOKEN="${TODOIST_API_TOKEN:-}"
+  export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
 fi
 
 # 2. If TODOIST_API_TOKEN still empty, try 1Password (interactive only)
