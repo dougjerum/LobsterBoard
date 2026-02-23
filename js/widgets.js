@@ -3169,9 +3169,12 @@ const WIDGETS = {
         var badge = document.getElementById('${props.id}-badge');
         var statusEl = document.getElementById('${props.id}-status');
         var pollMs = ${parseInt(props.pollInterval || '10', 10) * 1000};
-        var currentView = 'loading'; // loading, auth, chats, messages
+        var currentView = 'loading'; // loading, auth, chats, topics, messages
         var currentChatId = null;
         var currentChatTitle = '';
+        var currentTopicId = null;
+        var currentTopicTitle = '';
+        var currentChatIsForum = false;
         var eventSource = null;
 
         function clearBody() {
@@ -3331,10 +3334,93 @@ const WIDGETS = {
             row.appendChild(icon);
             row.appendChild(info);
 
-            row.onclick = function() { loadMessages(chat.id, chat.title || 'Chat ' + chat.id); };
+            row.onclick = function() {
+              var title = chat.title || 'Chat ' + chat.id;
+              if (chat.is_forum) {
+                loadTopics(chat.id, title);
+              } else {
+                currentChatIsForum = false;
+                currentTopicId = null;
+                loadMessages(chat.id, title);
+              }
+            };
             list.appendChild(row);
           });
 
+          body.appendChild(list);
+        }
+
+        // ── Topics UI (forum groups) ──
+        function showTopics(chatId, chatTitle, topics) {
+          clearBody();
+          currentView = 'topics';
+          currentChatId = chatId;
+          currentChatTitle = chatTitle;
+          currentChatIsForum = true;
+          currentTopicId = null;
+
+          var header = document.createElement('div');
+          header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0 8px;border-bottom:1px solid var(--border);flex-shrink:0;';
+
+          var backBtn = document.createElement('button');
+          backBtn.textContent = '\u2190';
+          backBtn.style.cssText = 'background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:calc(16px * var(--font-scale, 1));padding:2px 6px;';
+          backBtn.onclick = function() { loadChats(); };
+
+          var titleEl = document.createElement('div');
+          titleEl.style.cssText = 'font-weight:600;font-size:calc(13px * var(--font-scale, 1));flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+          titleEl.textContent = chatTitle;
+
+          header.appendChild(backBtn);
+          header.appendChild(titleEl);
+
+          var list = document.createElement('div');
+          list.style.cssText = 'flex:1;overflow-y:auto;';
+
+          if (!topics || !topics.length) {
+            var empty = document.createElement('div');
+            empty.style.cssText = 'text-align:center;opacity:0.5;padding:20px;font-size:calc(12px * var(--font-scale, 1));';
+            empty.textContent = 'No topics';
+            list.appendChild(empty);
+            body.appendChild(header);
+            body.appendChild(list);
+            return;
+          }
+
+          topics.forEach(function(topic) {
+            var row = document.createElement('div');
+            row.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;font-size:calc(12px * var(--font-scale, 1));';
+            row.addEventListener('mouseenter', function() { row.style.background = 'var(--bg-tertiary)'; });
+            row.addEventListener('mouseleave', function() { row.style.background = ''; });
+
+            var icon = document.createElement('span');
+            icon.textContent = topic.icon || '\uD83D\uDCAC';
+
+            var info = document.createElement('div');
+            info.style.cssText = 'flex:1;overflow:hidden;';
+
+            var nameEl = document.createElement('div');
+            nameEl.style.cssText = 'font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            nameEl.textContent = topic.name || 'Topic ' + topic.id;
+
+            var preview = document.createElement('div');
+            preview.style.cssText = 'opacity:0.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:calc(11px * var(--font-scale, 1));';
+            preview.textContent = topic.lastMessage || '';
+
+            info.appendChild(nameEl);
+            info.appendChild(preview);
+            row.appendChild(icon);
+            row.appendChild(info);
+
+            row.onclick = function() {
+              currentTopicId = topic.id;
+              currentTopicTitle = topic.name || 'Topic ' + topic.id;
+              loadMessages(chatId, currentTopicTitle, topic.id);
+            };
+            list.appendChild(row);
+          });
+
+          body.appendChild(header);
           body.appendChild(list);
         }
 
@@ -3350,9 +3436,15 @@ const WIDGETS = {
           header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0 8px;border-bottom:1px solid var(--border);flex-shrink:0;';
 
           var backBtn = document.createElement('button');
-          backBtn.textContent = '←';
+          backBtn.textContent = '\u2190';
           backBtn.style.cssText = 'background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:calc(16px * var(--font-scale, 1));padding:2px 6px;';
-          backBtn.onclick = function() { loadChats(); };
+          backBtn.onclick = function() {
+            if (currentChatIsForum) {
+              loadTopics(currentChatId, currentChatTitle);
+            } else {
+              loadChats();
+            }
+          };
 
           var chatName = document.createElement('div');
           chatName.style.cssText = 'font-weight:600;font-size:calc(13px * var(--font-scale, 1));flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
@@ -3425,14 +3517,16 @@ const WIDGETS = {
             var txt = msgInput.value.trim();
             if (!txt) return;
             sendBtn.disabled = true;
+            var payload = { chat_id: chatId, text: txt };
+            if (currentTopicId) payload.message_thread_id = currentTopicId;
             fetch('/api/telegram/send', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ chat_id: chatId, text: txt })
+              body: JSON.stringify(payload)
             }).then(function(r) { return r.json(); }).then(function(d) {
               msgInput.value = '';
               sendBtn.disabled = false;
-              if (!d.error) loadMessages(chatId, chatTitle);
+              if (!d.error) loadMessages(chatId, chatTitle, currentTopicId);
             }).catch(function() { sendBtn.disabled = false; });
           }
 
@@ -3480,8 +3574,31 @@ const WIDGETS = {
             .catch(function() { showAuth('offline'); });
         }
 
-        function loadMessages(chatId, chatTitle) {
-          fetch('/api/telegram/messages?chat_id=' + chatId + '&limit=50')
+        function loadTopics(chatId, chatTitle) {
+          fetch('/api/telegram/topics?chat_id=' + chatId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (Array.isArray(data) && data.length) {
+                showTopics(chatId, chatTitle, data);
+              } else {
+                // Bridge doesn't support topics or none found — fall back to messages
+                currentChatIsForum = false;
+                currentTopicId = null;
+                loadMessages(chatId, chatTitle);
+              }
+            })
+            .catch(function() {
+              // Bridge error — fall back to messages
+              currentChatIsForum = false;
+              currentTopicId = null;
+              loadMessages(chatId, chatTitle);
+            });
+        }
+
+        function loadMessages(chatId, chatTitle, topicId) {
+          var url = '/api/telegram/messages?chat_id=' + chatId + '&limit=50';
+          if (topicId) url += '&message_thread_id=' + topicId;
+          fetch(url)
             .then(function(r) { return r.json(); })
             .then(function(msgs) {
               showMessages(chatId, chatTitle, Array.isArray(msgs) ? msgs : []);
@@ -3507,7 +3624,9 @@ const WIDGETS = {
                   sseDebounceTimer = setTimeout(function() {
                     sseDebounceTimer = null;
                     if (currentView === 'messages' && currentChatId) {
-                      loadMessages(currentChatId, currentChatTitle);
+                      loadMessages(currentChatId, currentChatTitle, currentTopicId);
+                    } else if (currentView === 'topics' && currentChatId) {
+                      loadTopics(currentChatId, currentChatTitle);
                     } else if (currentView === 'chats') {
                       loadChats();
                     }
