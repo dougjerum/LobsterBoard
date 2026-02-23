@@ -60,6 +60,7 @@ if (!OC_TOKEN && _ocIdentity && _ocIdentity.deviceToken) {
 }
 let _ocWs = null;
 let _ocAuthenticated = false;
+let _ocServerVersion = null; // Captured from connect response
 let _ocPending = new Map(); // id -> { resolve, timer }
 let _ocReconnectTimer = null;
 
@@ -112,7 +113,9 @@ function ocConnect() {
     if (msg.type === 'res' && !_ocAuthenticated) {
       if (msg.ok) {
         _ocAuthenticated = true;
+        _ocServerVersion = msg.payload?.server?.version || null;
         console.log('[openclaw] Authenticated — scopes:', msg.payload?.auth?.scopes?.join(', '));
+        if (_ocServerVersion) console.log('[openclaw] Server version:', _ocServerVersion);
       } else {
         console.log('[openclaw] Connect failed:', msg.error?.message || JSON.stringify(msg.error));
       }
@@ -145,6 +148,7 @@ function ocConnect() {
 
 function _ocCleanup() {
   _ocAuthenticated = false;
+  _ocServerVersion = null;
   _ocWs = null;
   // Reject all pending requests
   for (const [, p] of _ocPending) {
@@ -1256,17 +1260,8 @@ const server = http.createServer(async (req, res) => {
     }
     (async () => {
       try {
-        // Get running version from OpenClaw via WS RPC
-        let currentVersion = 'unknown';
-        try {
-          const cfg = await ocRpc('config.get', {});
-          if (cfg.ok && cfg.payload) {
-            const v = cfg.payload.parsed?.meta?.lastTouchedVersion
-                   || cfg.payload.resolved?.meta?.lastTouchedVersion
-                   || cfg.payload.config?.meta?.lastTouchedVersion;
-            if (v) currentVersion = v;
-          }
-        } catch (_) {}
+        // Use version from OpenClaw connect handshake
+        const currentVersion = _ocServerVersion || 'unknown';
 
         const ghRes = await fetch('https://api.github.com/repos/openclaw/openclaw/releases/latest');
         const ghData = await ghRes.json();
