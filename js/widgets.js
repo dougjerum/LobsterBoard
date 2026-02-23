@@ -3135,6 +3135,398 @@ const WIDGETS = {
     `
   },
 
+  'telegram': {
+    name: 'Telegram',
+    icon: '✈️',
+    category: 'large',
+    description: 'Personal Telegram client — send and receive messages from your account. Requires TDLib bridge on Mac Mini.',
+    defaultWidth: 380,
+    defaultHeight: 500,
+    hasApiKey: false,
+    properties: {
+      title: 'Telegram',
+      pollInterval: '10'
+    },
+    preview: `<div style="padding:4px;font-size:11px;">
+      <div style="opacity:0.6;margin-bottom:4px;">Chats</div>
+      <div style="padding:2px 4px;background:var(--bg-tertiary);border-radius:3px;margin-bottom:2px;">📱 John Doe — Hey, are you free?</div>
+      <div style="padding:2px 4px;border-radius:3px;margin-bottom:2px;">👥 Work Group — Meeting at 3pm</div>
+      <div style="padding:2px 4px;border-radius:3px;">📢 News Channel — Breaking news...</div>
+    </div>`,
+    generateHtml: (props) => `
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;">
+        <div class="dash-card-head">
+          <span class="dash-card-title">${props.title || 'Telegram'}</span>
+          <span class="dash-card-badge" id="${props.id}-badge" style="display:none;"></span>
+        </div>
+        <div class="dash-card-body" id="${props.id}-body" style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+          <div id="${props.id}-status" style="text-align:center;padding:20px;opacity:0.5;font-size:calc(12px * var(--font-scale, 1));">Connecting...</div>
+        </div>
+      </div>`,
+    generateJs: (props) => `
+      (function() {
+        var body = document.getElementById('${props.id}-body');
+        var badge = document.getElementById('${props.id}-badge');
+        var statusEl = document.getElementById('${props.id}-status');
+        var pollMs = ${parseInt(props.pollInterval || '10', 10) * 1000};
+        var currentView = 'loading'; // loading, auth, chats, messages
+        var currentChatId = null;
+        var currentChatTitle = '';
+        var eventSource = null;
+
+        function clearBody() {
+          while (body.firstChild) body.removeChild(body.firstChild);
+        }
+
+        // ── Auth UI ──
+        function showAuth(state, hint) {
+          clearBody();
+          currentView = 'auth';
+          var wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;height:100%;';
+
+          var title = document.createElement('div');
+          title.style.cssText = 'font-size:calc(14px * var(--font-scale, 1));font-weight:600;';
+
+          var input = document.createElement('input');
+          input.style.cssText = 'width:80%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text-primary);font-size:calc(13px * var(--font-scale, 1));text-align:center;';
+
+          var btn = document.createElement('button');
+          btn.style.cssText = 'background:var(--accent);color:#fff;border:none;border-radius:4px;padding:8px 20px;cursor:pointer;font-size:calc(12px * var(--font-scale, 1));';
+
+          var errEl = document.createElement('div');
+          errEl.style.cssText = 'color:#d1453b;font-size:calc(11px * var(--font-scale, 1));display:none;';
+
+          if (state === 'waitPhoneNumber') {
+            title.textContent = 'Telegram Login';
+            input.placeholder = '+1 555 123 4567';
+            input.type = 'tel';
+            btn.textContent = 'Send Code';
+            btn.onclick = function() {
+              var phone = input.value.trim();
+              if (!phone) return;
+              btn.disabled = true;
+              btn.textContent = 'Sending...';
+              fetch('/api/telegram/auth/phone', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone })
+              }).then(function(r) { return r.json(); }).then(function(d) {
+                if (d.error) { errEl.textContent = d.error; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Send Code'; }
+                else checkAuth();
+              }).catch(function() { errEl.textContent = 'Bridge unavailable'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Send Code'; });
+            };
+          } else if (state === 'waitCode') {
+            title.textContent = 'Enter Code';
+            input.placeholder = '12345';
+            input.type = 'text';
+            input.maxLength = 10;
+            btn.textContent = 'Verify';
+            btn.onclick = function() {
+              var code = input.value.trim();
+              if (!code) return;
+              btn.disabled = true;
+              btn.textContent = 'Verifying...';
+              fetch('/api/telegram/auth/code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+              }).then(function(r) { return r.json(); }).then(function(d) {
+                if (d.error) { errEl.textContent = d.error; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Verify'; }
+                else checkAuth();
+              }).catch(function() { errEl.textContent = 'Bridge unavailable'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Verify'; });
+            };
+          } else if (state === 'waitPassword') {
+            title.textContent = '2FA Password';
+            if (hint) {
+              var hintEl = document.createElement('div');
+              hintEl.style.cssText = 'font-size:calc(11px * var(--font-scale, 1));opacity:0.6;';
+              hintEl.textContent = 'Hint: ' + hint;
+              wrap.appendChild(hintEl);
+            }
+            input.placeholder = 'Password';
+            input.type = 'password';
+            btn.textContent = 'Login';
+            btn.onclick = function() {
+              var pw = input.value;
+              if (!pw) return;
+              btn.disabled = true;
+              btn.textContent = 'Logging in...';
+              fetch('/api/telegram/auth/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pw })
+              }).then(function(r) { return r.json(); }).then(function(d) {
+                if (d.error) { errEl.textContent = d.error; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Login'; }
+                else checkAuth();
+              }).catch(function() { errEl.textContent = 'Bridge unavailable'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Login'; });
+            };
+          } else {
+            title.textContent = 'Bridge Offline';
+            var msg = document.createElement('div');
+            msg.style.cssText = 'opacity:0.5;font-size:calc(12px * var(--font-scale, 1));';
+            msg.textContent = 'Telegram bridge is not reachable. Check SSH tunnel and bridge process.';
+            wrap.appendChild(title);
+            wrap.appendChild(msg);
+            body.appendChild(wrap);
+            return;
+          }
+
+          // Enter key submits
+          input.addEventListener('keydown', function(e) { if (e.key === 'Enter') btn.click(); });
+
+          wrap.appendChild(title);
+          wrap.appendChild(input);
+          wrap.appendChild(btn);
+          wrap.appendChild(errEl);
+          body.appendChild(wrap);
+          input.focus();
+        }
+
+        // ── Chat List UI ──
+        function showChats(chats) {
+          clearBody();
+          currentView = 'chats';
+          currentChatId = null;
+
+          badge.style.display = '';
+          badge.textContent = chats.length;
+
+          var list = document.createElement('div');
+          list.style.cssText = 'flex:1;overflow-y:auto;';
+
+          if (!chats.length) {
+            var empty = document.createElement('div');
+            empty.style.cssText = 'text-align:center;opacity:0.5;padding:20px;font-size:calc(12px * var(--font-scale, 1));';
+            empty.textContent = 'No chats';
+            list.appendChild(empty);
+            body.appendChild(list);
+            return;
+          }
+
+          chats.forEach(function(chat) {
+            var row = document.createElement('div');
+            row.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;font-size:calc(12px * var(--font-scale, 1));';
+            row.addEventListener('mouseenter', function() { row.style.background = 'var(--bg-tertiary)'; });
+            row.addEventListener('mouseleave', function() { row.style.background = ''; });
+
+            var icon = document.createElement('span');
+            icon.textContent = chat.type === 'private' ? '👤' : chat.type === 'group' || chat.type === 'supergroup' ? '👥' : '📢';
+
+            var info = document.createElement('div');
+            info.style.cssText = 'flex:1;overflow:hidden;';
+
+            var nameEl = document.createElement('div');
+            nameEl.style.cssText = 'font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            nameEl.textContent = chat.title || 'Chat ' + chat.id;
+
+            var preview = document.createElement('div');
+            preview.style.cssText = 'opacity:0.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:calc(11px * var(--font-scale, 1));';
+            preview.textContent = chat.lastMessage || '';
+
+            info.appendChild(nameEl);
+            info.appendChild(preview);
+
+            row.appendChild(icon);
+            row.appendChild(info);
+
+            row.onclick = function() { loadMessages(chat.id, chat.title || 'Chat ' + chat.id); };
+            list.appendChild(row);
+          });
+
+          body.appendChild(list);
+        }
+
+        // ── Messages UI ──
+        function showMessages(chatId, chatTitle, messages) {
+          clearBody();
+          currentView = 'messages';
+          currentChatId = chatId;
+          currentChatTitle = chatTitle;
+
+          // Header with back button
+          var header = document.createElement('div');
+          header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0 8px;border-bottom:1px solid var(--border);flex-shrink:0;';
+
+          var backBtn = document.createElement('button');
+          backBtn.textContent = '←';
+          backBtn.style.cssText = 'background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:calc(16px * var(--font-scale, 1));padding:2px 6px;';
+          backBtn.onclick = function() { loadChats(); };
+
+          var chatName = document.createElement('div');
+          chatName.style.cssText = 'font-weight:600;font-size:calc(13px * var(--font-scale, 1));flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+          chatName.textContent = chatTitle;
+
+          header.appendChild(backBtn);
+          header.appendChild(chatName);
+
+          // Message list
+          var msgList = document.createElement('div');
+          msgList.style.cssText = 'flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:4px;';
+
+          if (messages && messages.length) {
+            // Reverse so oldest first
+            var sorted = messages.slice().reverse();
+            sorted.forEach(function(msg) {
+              var bubble = document.createElement('div');
+              bubble.style.cssText = 'padding:4px 8px;border-radius:6px;font-size:calc(12px * var(--font-scale, 1));max-width:85%;word-wrap:break-word;';
+
+              var isMe = msg.from && msg.from.is_self;
+              if (isMe) {
+                bubble.style.alignSelf = 'flex-end';
+                bubble.style.background = 'var(--accent)';
+                bubble.style.color = '#fff';
+              } else {
+                bubble.style.alignSelf = 'flex-start';
+                bubble.style.background = 'var(--bg-tertiary)';
+              }
+
+              if (!isMe && msg.from) {
+                var sender = document.createElement('div');
+                sender.style.cssText = 'font-size:calc(10px * var(--font-scale, 1));font-weight:600;opacity:0.7;margin-bottom:2px;';
+                sender.textContent = msg.from.first_name || 'Unknown';
+                bubble.appendChild(sender);
+              }
+
+              var text = document.createElement('div');
+              text.textContent = msg.text || msg.caption || (msg.document ? '[Document: ' + (msg.document.file_name || 'file') + ']' : msg.photo ? '[Photo]' : msg.sticker ? '[Sticker]' : msg.voice ? '[Voice]' : msg.video ? '[Video]' : '');
+              bubble.appendChild(text);
+
+              var time = document.createElement('div');
+              time.style.cssText = 'font-size:calc(9px * var(--font-scale, 1));opacity:0.5;text-align:right;margin-top:2px;';
+              var d = new Date(msg.date * 1000);
+              time.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              bubble.appendChild(time);
+
+              msgList.appendChild(bubble);
+            });
+          } else {
+            var empty = document.createElement('div');
+            empty.style.cssText = 'text-align:center;opacity:0.5;padding:20px;font-size:calc(12px * var(--font-scale, 1));';
+            empty.textContent = 'No messages';
+            msgList.appendChild(empty);
+          }
+
+          // Compose bar
+          var compose = document.createElement('div');
+          compose.style.cssText = 'display:flex;gap:6px;padding:8px 0 0;border-top:1px solid var(--border);flex-shrink:0;';
+
+          var msgInput = document.createElement('input');
+          msgInput.type = 'text';
+          msgInput.placeholder = 'Message...';
+          msgInput.style.cssText = 'flex:1;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:6px 8px;color:var(--text-primary);font-size:calc(12px * var(--font-scale, 1));';
+
+          var sendBtn = document.createElement('button');
+          sendBtn.textContent = 'Send';
+          sendBtn.style.cssText = 'background:var(--accent);color:#fff;border:none;border-radius:4px;padding:6px 12px;cursor:pointer;font-size:calc(12px * var(--font-scale, 1));';
+
+          function doSend() {
+            var txt = msgInput.value.trim();
+            if (!txt) return;
+            sendBtn.disabled = true;
+            fetch('/api/telegram/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, text: txt })
+            }).then(function(r) { return r.json(); }).then(function(d) {
+              msgInput.value = '';
+              sendBtn.disabled = false;
+              if (!d.error) loadMessages(chatId, chatTitle);
+            }).catch(function() { sendBtn.disabled = false; });
+          }
+
+          sendBtn.onclick = doSend;
+          msgInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSend(); });
+
+          compose.appendChild(msgInput);
+          compose.appendChild(sendBtn);
+
+          body.appendChild(header);
+          body.appendChild(msgList);
+          body.appendChild(compose);
+
+          // Scroll to bottom
+          msgList.scrollTop = msgList.scrollHeight;
+          msgInput.focus();
+        }
+
+        // ── Data Loading ──
+        function checkAuth() {
+          fetch('/api/telegram/auth/status')
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.state === 'ready') {
+                loadChats();
+                connectSSE();
+              } else if (d.state === 'waitPhoneNumber' || d.state === 'waitCode' || d.state === 'waitPassword') {
+                showAuth(d.state, d.passwordHint);
+              } else {
+                showAuth('offline');
+              }
+            })
+            .catch(function() {
+              showAuth('offline');
+            });
+        }
+
+        function loadChats() {
+          fetch('/api/telegram/chats')
+            .then(function(r) { return r.json(); })
+            .then(function(chats) {
+              if (Array.isArray(chats)) showChats(chats);
+              else showAuth('offline');
+            })
+            .catch(function() { showAuth('offline'); });
+        }
+
+        function loadMessages(chatId, chatTitle) {
+          fetch('/api/telegram/messages?chat_id=' + chatId + '&limit=50')
+            .then(function(r) { return r.json(); })
+            .then(function(msgs) {
+              showMessages(chatId, chatTitle, Array.isArray(msgs) ? msgs : []);
+            })
+            .catch(function() {
+              showMessages(chatId, chatTitle, []);
+            });
+        }
+
+        // ── SSE for real-time messages ──
+        function connectSSE() {
+          if (eventSource) { eventSource.close(); eventSource = null; }
+          try {
+            eventSource = new EventSource('/api/telegram/stream');
+            eventSource.onmessage = function(e) {
+              try {
+                var data = JSON.parse(e.data);
+                if (data.type === 'message' && currentView === 'messages' && data.chatId === currentChatId) {
+                  // Reload messages for current chat
+                  loadMessages(currentChatId, currentChatTitle);
+                } else if (data.type === 'message' && currentView === 'chats') {
+                  // Refresh chat list to update previews
+                  loadChats();
+                }
+              } catch(ex) {}
+            };
+            eventSource.onerror = function() {
+              if (eventSource) { eventSource.close(); eventSource = null; }
+              // Retry SSE after delay
+              setTimeout(connectSSE, 10000);
+            };
+          } catch(ex) {}
+        }
+
+        // Initial load
+        checkAuth();
+
+        // Poll for auth status changes (in case bridge restarts)
+        setInterval(function() {
+          if (currentView === 'auth') checkAuth();
+          else if (currentView === 'chats') loadChats();
+        }, pollMs);
+      })();
+    `
+  },
+
 };
 
 // Export for use in builder

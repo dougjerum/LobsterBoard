@@ -1135,6 +1135,88 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── Telegram Bridge proxy ─────────────────────────────────
+  const TG_BRIDGE_PORT = process.env.TG_BRIDGE_PORT || 18790;
+  const TG_BRIDGE = `http://127.0.0.1:${TG_BRIDGE_PORT}`;
+
+  if (pathname.startsWith('/api/telegram/')) {
+    const bridgePath = pathname.slice('/api/telegram'.length); // e.g. "/chats", "/auth/status"
+
+    // SSE streaming — pipe directly from bridge
+    if (req.method === 'GET' && bridgePath === '/stream') {
+      const proxyReq = http.request(
+        { hostname: '127.0.0.1', port: TG_BRIDGE_PORT, path: '/stream', method: 'GET' },
+        (proxyRes) => {
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*'
+          });
+          proxyRes.pipe(res);
+        }
+      );
+      proxyReq.on('error', () => {
+        sendError(res, 'Telegram bridge unavailable', 502);
+      });
+      proxyReq.end();
+      return;
+    }
+
+    // All other telegram endpoints — proxy GET/POST to bridge
+    (async () => {
+      try {
+        let body = null;
+        if (req.method === 'POST') {
+          body = await new Promise((resolve, reject) => {
+            let data = '';
+            req.on('data', chunk => data += chunk);
+            req.on('end', () => {
+              try { resolve(JSON.parse(data)); } catch { resolve(data); }
+            });
+            req.on('error', reject);
+          });
+        }
+
+        const result = await new Promise((resolve, reject) => {
+          const url = new URL(bridgePath, TG_BRIDGE);
+          // Forward query string for GET requests
+          if (req.method === 'GET' && parsedUrl.search) {
+            url.search = parsedUrl.search;
+          }
+          const opts = {
+            method: req.method,
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + url.search
+          };
+          if (body && typeof body === 'object') {
+            opts.headers = { 'Content-Type': 'application/json' };
+          }
+          const proxyReq = http.request(opts, (proxyRes) => {
+            let data = '';
+            proxyRes.on('data', chunk => data += chunk);
+            proxyRes.on('end', () => resolve({ status: proxyRes.statusCode, body: data }));
+          });
+          proxyReq.on('error', reject);
+          if (body) {
+            proxyReq.write(typeof body === 'object' ? JSON.stringify(body) : body);
+          }
+          proxyReq.end();
+        });
+
+        res.writeHead(result.status, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(result.body);
+      } catch (e) {
+        sendError(res, 'Telegram bridge unavailable: ' + e.message, 502);
+      }
+    })();
+    return;
+  }
+
   // GET /api/cron - Cron jobs from OpenClaw via WS RPC
   if (req.method === 'GET' && pathname === '/api/cron') {
     (async () => {

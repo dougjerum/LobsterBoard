@@ -7,6 +7,7 @@ set -uo pipefail
 
 MINI_TS_IP="100.114.198.62"
 OC_PORT=18789
+TG_BRIDGE_PORT=18790
 LB_PORT="${PORT:-8080}"
 
 # ── Colors (disabled if not a terminal) ──
@@ -52,19 +53,22 @@ else
   err "No Todoist token (widget will be disabled)"
 fi
 
-# ── SSH tunnel to Mac Mini for OpenClaw ──
+# ── SSH tunnel to Mac Mini for OpenClaw + Telegram Bridge ──
 # Skip if tunnel already active (idempotent for launchd restarts)
 TUNNEL_PID=""
-if lsof -ti:"$OC_PORT" -sTCP:LISTEN &>/dev/null; then
+if lsof -ti:"$OC_PORT" -sTCP:LISTEN &>/dev/null && lsof -ti:"$TG_BRIDGE_PORT" -sTCP:LISTEN &>/dev/null; then
   TUNNEL_PID=$(lsof -ti:"$OC_PORT" -sTCP:LISTEN 2>/dev/null | head -1)
   ok "SSH tunnel already active (PID $TUNNEL_PID)"
 else
-  log "Opening SSH tunnel to Mac Mini ($MINI_TS_IP:$OC_PORT)..."
-  if ssh -f -N -L "$OC_PORT:127.0.0.1:$OC_PORT" "$MINI_TS_IP" 2>/dev/null; then
+  log "Opening SSH tunnel to Mac Mini ($MINI_TS_IP — ports $OC_PORT, $TG_BRIDGE_PORT)..."
+  if ssh -f -N \
+    -L "$OC_PORT:127.0.0.1:$OC_PORT" \
+    -L "$TG_BRIDGE_PORT:127.0.0.1:$TG_BRIDGE_PORT" \
+    "$MINI_TS_IP" 2>/dev/null; then
     TUNNEL_PID=$(lsof -ti:"$OC_PORT" -sTCP:LISTEN 2>/dev/null | head -1)
     ok "Tunnel active (PID ${TUNNEL_PID:-unknown})"
   else
-    err "Tunnel failed — OpenClaw widgets will show fallback data"
+    err "Tunnel failed — OpenClaw/Telegram widgets will show fallback data"
   fi
 fi
 
