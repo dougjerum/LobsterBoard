@@ -3503,7 +3503,7 @@ const WIDGETS = {
                 if (existing) {
                   existing.lastMessage = payload.message.text || '[media]';
                   existing.lastMessageDate = payload.message.date;
-                  existing.messageCount++;
+                  existing.messageCount = (existing.messageCount || 0) + 1;
                 }
                 // Append to current view if matching
                 if (String(payload.chatId) === String(currentChatId)) {
@@ -3527,9 +3527,14 @@ const WIDGETS = {
 
         // ── Initial load ──
         async function loadChats() {
+          const loadingEl = document.createElement('div');
+          loadingEl.textContent = 'Loading chats...';
+          loadingEl.style.cssText = 'padding:10px;color:rgba(255,255,255,0.5);font-size:12px;text-align:center;';
+          chatListEl.appendChild(loadingEl);
           try {
             const resp = await fetch('/api/telegram/chats');
             chatData = await resp.json();
+            if (loadingEl.parentNode) loadingEl.parentNode.removeChild(loadingEl);
             renderChatList('');
           } catch (e) {
             const errEl = document.createElement('div');
@@ -3543,11 +3548,27 @@ const WIDGETS = {
         connectSSE();
         updateLayout();
 
-        // Poll for new chats periodically
+        // Poll for new chats periodically (merge to preserve SSE state)
         setInterval(async () => {
           try {
             const resp = await fetch('/api/telegram/chats');
-            chatData = await resp.json();
+            const fresh = await resp.json();
+            for (const fc of fresh) {
+              const existing = chatData.find(c => String(c.id) === String(fc.id));
+              if (existing) {
+                existing.title = fc.title;
+                existing.type = fc.type;
+                existing.topics = fc.topics;
+                if (fc.lastMessageDate > (existing.lastMessageDate || 0)) {
+                  existing.lastMessage = fc.lastMessage;
+                  existing.lastMessageDate = fc.lastMessageDate;
+                  existing.messageCount = fc.messageCount;
+                }
+              } else {
+                chatData.push(fc);
+              }
+            }
+            chatData.sort((a, b) => (b.lastMessageDate || 0) - (a.lastMessageDate || 0));
             renderChatList(searchInput.value);
           } catch (e) {}
         }, ${(props.pollInterval || 30) * 1000});

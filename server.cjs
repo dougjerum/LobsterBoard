@@ -1273,7 +1273,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && pathname === '/api/telegram/upload') {
     if (!tgBot) { sendError(res, 'Telegram not configured', 503); return; }
     const contentType = req.headers['content-type'] || '';
-    const boundaryMatch = contentType.match(/boundary=(.+)/);
+    const boundaryMatch = contentType.match(/boundary=([^\s;]+)/);
     if (!boundaryMatch) { sendError(res, 'multipart boundary required', 400); return; }
     const chunks = [];
     req.on('data', chunk => {
@@ -1295,6 +1295,7 @@ const server = http.createServer(async (req, res) => {
           if (headerEnd === -1) break;
           const headers = buf.slice(bEnd + 2, headerEnd).toString();
           const nextBoundary = buf.indexOf(boundary, headerEnd + 4);
+          if (nextBoundary === -1) break;
           const content = buf.slice(headerEnd + 4, nextBoundary - 2);
           const nameMatch = headers.match(/name="([^"]+)"/);
           const fileMatch = headers.match(/filename="([^"]+)"/);
@@ -2250,8 +2251,8 @@ const latestImageHandler = (parsedUrl, res) => {
 };
 
 // Graceful shutdown
-process.on('SIGTERM', () => server.close(() => process.exit(0)));
-process.on('SIGINT', () => server.close(() => process.exit(0)));
+process.on('SIGTERM', () => { if (tgBot) tgBot.stopPolling(); server.close(() => process.exit(0)); });
+process.on('SIGINT', () => { if (tgBot) tgBot.stopPolling(); server.close(() => process.exit(0)); });
 
 server.listen(PORT, HOST, () => {
   console.log(`
