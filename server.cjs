@@ -1197,6 +1197,151 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── Telegram API ──
+
+  // GET /api/telegram/chats — list all known chats
+  if (req.method === 'GET' && pathname === '/api/telegram/chats') {
+    if (!tgBot) { sendError(res, 'Telegram not configured', 503); return; }
+    const chats = [];
+    for (const [id, meta] of tgChatMeta) {
+      const msgs = tgMessageCache.get(id) || [];
+      const lastMsg = msgs.length ? msgs[msgs.length - 1] : null;
+      chats.push({
+        id: meta.id,
+        title: meta.title,
+        type: meta.type,
+        topics: Array.from(meta.topics.values()),
+        lastMessage: lastMsg ? (lastMsg.text || '[media]') : '',
+        lastMessageDate: lastMsg ? lastMsg.date : 0,
+        messageCount: msgs.length
+      });
+    }
+    chats.sort((a, b) => b.lastMessageDate - a.lastMessageDate);
+    sendJson(res, 200, chats);
+    return;
+  }
+
+  // GET /api/telegram/chats/:chatId/topics — list forum topics for a group
+  const topicsMatch = pathname.match(/^\/api\/telegram\/chats\/(-?\d+)\/topics$/);
+  if (req.method === 'GET' && topicsMatch) {
+    if (!tgBot) { sendError(res, 'Telegram not configured', 503); return; }
+    const chatId = Number(topicsMatch[1]);
+    const meta = tgChatMeta.get(chatId);
+    if (!meta) { sendError(res, 'Chat not found', 404); return; }
+    sendJson(res, 200, Array.from(meta.topics.values()));
+    return;
+  }
+
+  // GET /api/telegram/messages — fetch messages for a chat
+  if (req.method === 'GET' && pathname === '/api/telegram/messages') {
+    if (!tgBot) { sendError(res, 'Telegram not configured', 503); return; }
+    const chatId = Number(parsedUrl.searchParams.get('chat_id'));
+    const topicId = parsedUrl.searchParams.get('topic_id');
+    const limit = Math.min(Number(parsedUrl.searchParams.get('limit') || 50), 200);
+    const offset = Number(parsedUrl.searchParams.get('offset') || 0);
+    if (!chatId) { sendError(res, 'chat_id required', 400); return; }
+    let msgs = tgMessageCache.get(chatId) || [];
+    if (topicId) {
+      const tid = Number(topicId);
+      msgs = msgs.filter(m => m.message_thread_id === tid);
+    }
+    const sliced = msgs.slice(offset, offset + limit);
+    sendJson(res, 200, { messages: sliced, total: msgs.length });
+    return;
+  }
+
+  // POST /api/telegram/send — send a text message
+  if (req.method === 'POST' && pathname === '/api/telegram/send') {
+    if (!tgBot) { sendError(res, 'Telegram not configured', 503); return; }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e6) req.destroy(); });
+    req.on('end', async () => {
+      try {
+        const { chat_id, text, topic_id, reply_to } = JSON.parse(body);
+        if (!chat_id || !text) { sendError(res, 'chat_id and text required', 400); return; }
+        const opts = {};
+        if (topic_id) opts.message_thread_id = Number(topic_id);
+        if (reply_to) opts.reply_to_message_id = Number(reply_to);
+        const sent = await tgBot.sendMessage(chat_id, text, opts);
+        sendJson(res, 200, sent);
+      } catch (e) { sendError(res, e.message); }
+    });
+    return;
+  }
+
+  // POST /api/telegram/upload — send a file (multipart form-data)
+  if (req.method === 'POST' && pathname === '/api/telegram/upload') {
+    if (!tgBot) { sendError(res, 'Telegram not configured', 503); return; }
+    const contentType = req.headers['content-type'] || '';
+    const boundaryMatch = contentType.match(/boundary=(.+)/);
+    if (!boundaryMatch) { sendError(res, 'multipart boundary required', 400); return; }
+    const chunks = [];
+    req.on('data', chunk => {
+      chunks.push(chunk);
+      if (chunks.reduce((s, c) => s + c.length, 0) > 50 * 1024 * 1024) req.destroy();
+    });
+    req.on('end', async () => {
+      try {
+        const buf = Buffer.concat(chunks);
+        const boundary = '--' + boundaryMatch[1];
+        const parts = [];
+        let pos = 0;
+        while (pos < buf.length) {
+          const bStart = buf.indexOf(boundary, pos);
+          if (bStart === -1) break;
+          const bEnd = bStart + boundary.length;
+          if (buf.slice(bEnd, bEnd + 2).toString() === '--') break;
+          const headerEnd = buf.indexOf('\r\n\r\n', bEnd);
+          if (headerEnd === -1) break;
+          const headers = buf.slice(bEnd + 2, headerEnd).toString();
+          const nextBoundary = buf.indexOf(boundary, headerEnd + 4);
+          const content = buf.slice(headerEnd + 4, nextBoundary - 2);
+          const nameMatch = headers.match(/name="([^"]+)"/);
+          const fileMatch = headers.match(/filename="([^"]+)"/);
+          const ctMatch = headers.match(/Content-Type:\s*(.+)/i);
+          parts.push({
+            name: nameMatch ? nameMatch[1] : '',
+            filename: fileMatch ? fileMatch[1] : null,
+            contentType: ctMatch ? ctMatch[1].trim() : null,
+            data: content
+          });
+          pos = nextBoundary;
+        }
+        const chatIdPart = parts.find(p => p.name === 'chat_id');
+        const filePart = parts.find(p => p.filename);
+        const captionPart = parts.find(p => p.name === 'caption');
+        const topicPart = parts.find(p => p.name === 'topic_id');
+        if (!chatIdPart || !filePart) { sendError(res, 'chat_id and file required', 400); return; }
+        const chatId = Number(chatIdPart.data.toString());
+        const opts = {};
+        if (captionPart) opts.caption = captionPart.data.toString();
+        if (topicPart) opts.message_thread_id = Number(topicPart.data.toString());
+        const sent = await tgBot.sendDocument(chatId, filePart.data, opts, {
+          filename: filePart.filename,
+          contentType: filePart.contentType || 'application/octet-stream'
+        });
+        sendJson(res, 200, sent);
+      } catch (e) { sendError(res, e.message); }
+    });
+    return;
+  }
+
+  // GET /api/telegram/stream — SSE for real-time messages
+  if (req.method === 'GET' && pathname === '/api/telegram/stream') {
+    if (!tgBot) { sendError(res, 'Telegram not configured', 503); return; }
+    if (tgSseClients.size >= 5) { sendError(res, 'Too many Telegram SSE connections', 429); return; }
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
+    tgSseClients.add(res);
+    req.on('close', () => tgSseClients.delete(res));
+    return;
+  }
+
   // GET /api/cron - Cron jobs from OpenClaw via WS RPC
   if (req.method === 'GET' && pathname === '/api/cron') {
     (async () => {
