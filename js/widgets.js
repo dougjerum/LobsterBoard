@@ -3135,6 +3135,426 @@ const WIDGETS = {
     `
   },
 
+  'telegram': {
+    name: 'Telegram',
+    icon: '📱',
+    category: 'large',
+    description: 'Full-featured Telegram messaging widget. Send/receive messages, browse groups and forum topics, upload files. Requires TELEGRAM_BOT_TOKEN env var on server.',
+    defaultWidth: 500,
+    defaultHeight: 550,
+    hasApiKey: false,
+    properties: {
+      title: 'Telegram',
+      pollInterval: '5',
+      messageLimit: '100',
+      showAvatars: 'true',
+    },
+    preview: `<div style="padding:4px;font-size:11px;">
+      <div style="display:flex;gap:4px;">
+        <div style="width:35%;border-right:1px solid rgba(255,255,255,0.1);padding-right:4px;">
+          <div style="font-weight:600;opacity:0.6;margin-bottom:2px;">Chats</div>
+          <div style="background:rgba(255,255,255,0.05);padding:2px 4px;border-radius:3px;margin-bottom:2px;">📱 Group Chat</div>
+          <div style="padding:2px 4px;">👤 Private</div>
+        </div>
+        <div style="width:65%;padding-left:4px;">
+          <div style="font-weight:600;margin-bottom:4px;">Group Chat</div>
+          <div style="opacity:0.7;font-size:10px;">Alice: Hello there!</div>
+          <div style="opacity:0.7;font-size:10px;">Bob: How are you?</div>
+        </div>
+      </div>
+    </div>`,
+    generateHtml: (props) => `
+      <div class="dash-card" id="widget-${props.id}" style="height:100%;display:flex;flex-direction:column;">
+        <div class="dash-card-head" style="flex-shrink:0;">
+          <span class="dash-card-title">${props.title || 'Telegram'}</span>
+          <span class="dash-card-badge" id="${props.id}-badge" style="display:none;">0</span>
+        </div>
+        <div id="${props.id}-container" style="flex:1;display:flex;overflow:hidden;min-height:0;"></div>
+      </div>
+    `,
+    generateJs: (props) => `
+      (function() {
+        const container = document.getElementById('${props.id}-container');
+        const badge = document.getElementById('${props.id}-badge');
+        if (!container) return;
+
+        let currentChatId = null;
+        let currentTopicId = null;
+        let isSmallMode = false;
+        let chatData = [];
+
+        // ── Build DOM structure ──
+        const chatListPanel = document.createElement('div');
+        chatListPanel.style.cssText = 'width:35%;min-width:120px;border-right:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;overflow:hidden;';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search chats...';
+        searchInput.style.cssText = 'width:100%;box-sizing:border-box;padding:6px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:inherit;font-size:12px;margin:6px;width:calc(100% - 12px);outline:none;';
+
+        const chatListEl = document.createElement('div');
+        chatListEl.style.cssText = 'flex:1;overflow-y:auto;';
+
+        chatListPanel.appendChild(searchInput);
+        chatListPanel.appendChild(chatListEl);
+
+        const messagePanel = document.createElement('div');
+        messagePanel.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden;';
+
+        const msgHeader = document.createElement('div');
+        msgHeader.style.cssText = 'padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;flex-shrink:0;';
+
+        const backBtn = document.createElement('button');
+        backBtn.textContent = '\\u2190';
+        backBtn.style.cssText = 'background:none;border:none;color:inherit;font-size:16px;cursor:pointer;padding:0 4px;display:none;';
+        backBtn.addEventListener('click', () => showChatList());
+
+        const headerTitle = document.createElement('span');
+        headerTitle.textContent = 'Select a chat';
+
+        msgHeader.appendChild(backBtn);
+        msgHeader.appendChild(headerTitle);
+
+        const msgList = document.createElement('div');
+        msgList.style.cssText = 'flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;';
+
+        const composer = document.createElement('div');
+        composer.style.cssText = 'padding:6px;border-top:1px solid rgba(255,255,255,0.1);display:flex;gap:4px;align-items:center;flex-shrink:0;';
+
+        const attachBtn = document.createElement('button');
+        attachBtn.textContent = '\\ud83d\\udcce';
+        attachBtn.style.cssText = 'background:none;border:none;font-size:16px;cursor:pointer;padding:2px;';
+        attachBtn.title = 'Upload file';
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.style.display = 'none';
+
+        const msgInput = document.createElement('input');
+        msgInput.type = 'text';
+        msgInput.placeholder = 'Type a message...';
+        msgInput.style.cssText = 'flex:1;padding:6px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;color:inherit;font-size:12px;outline:none;';
+
+        const sendBtn = document.createElement('button');
+        sendBtn.textContent = '\\u27a4';
+        sendBtn.style.cssText = 'background:#2AABEE;border:none;color:white;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;';
+
+        composer.appendChild(attachBtn);
+        composer.appendChild(fileInput);
+        composer.appendChild(msgInput);
+        composer.appendChild(sendBtn);
+
+        messagePanel.appendChild(msgHeader);
+        messagePanel.appendChild(msgList);
+        messagePanel.appendChild(composer);
+
+        container.appendChild(chatListPanel);
+        container.appendChild(messagePanel);
+
+        // ── Responsive layout ──
+        function updateLayout() {
+          const w = container.offsetWidth;
+          const small = w < 400;
+          if (small === isSmallMode) return;
+          isSmallMode = small;
+          if (small) {
+            chatListPanel.style.width = '100%';
+            chatListPanel.style.borderRight = 'none';
+            if (currentChatId) {
+              chatListPanel.style.display = 'none';
+              messagePanel.style.display = 'flex';
+            } else {
+              chatListPanel.style.display = 'flex';
+              messagePanel.style.display = 'none';
+            }
+            backBtn.style.display = 'block';
+          } else {
+            chatListPanel.style.width = '35%';
+            chatListPanel.style.borderRight = '1px solid rgba(255,255,255,0.1)';
+            chatListPanel.style.display = 'flex';
+            messagePanel.style.display = 'flex';
+            backBtn.style.display = 'none';
+          }
+        }
+
+        const ro = new ResizeObserver(() => updateLayout());
+        ro.observe(container);
+
+        function showChatList() {
+          if (isSmallMode) {
+            chatListPanel.style.display = 'flex';
+            messagePanel.style.display = 'none';
+          }
+          currentChatId = null;
+          currentTopicId = null;
+          highlightActive();
+        }
+
+        function showMessages() {
+          if (isSmallMode) {
+            chatListPanel.style.display = 'none';
+            messagePanel.style.display = 'flex';
+          }
+        }
+
+        // ── Chat list ──
+        function renderChatList(filter) {
+          while (chatListEl.firstChild) chatListEl.removeChild(chatListEl.firstChild);
+          const filtered = filter ? chatData.filter(c => c.title.toLowerCase().includes(filter.toLowerCase())) : chatData;
+          for (const chat of filtered) {
+            const item = document.createElement('div');
+            item.style.cssText = 'padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.05);';
+            item.dataset.chatId = chat.id;
+            item.addEventListener('mouseenter', () => { item.style.background = 'rgba(255,255,255,0.05)'; });
+            item.addEventListener('mouseleave', () => { if (String(currentChatId) !== String(chat.id)) item.style.background = 'none'; });
+
+            if (${props.showAvatars !== 'false'}) {
+              const avatar = document.createElement('div');
+              const initial = chat.title ? chat.title.charAt(0).toUpperCase() : '?';
+              avatar.textContent = initial;
+              const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F'];
+              const colorIdx = Math.abs(chat.id) % colors.length;
+              avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0;background:' + colors[colorIdx] + ';color:#000;';
+              item.appendChild(avatar);
+            }
+
+            const info = document.createElement('div');
+            info.style.cssText = 'flex:1;min-width:0;';
+            const titleEl = document.createElement('div');
+            titleEl.style.cssText = 'font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            titleEl.textContent = (chat.type === 'supergroup' || chat.type === 'group' ? '\\ud83d\\udc65 ' : '\\ud83d\\udc64 ') + chat.title;
+            const preview = document.createElement('div');
+            preview.style.cssText = 'font-size:11px;opacity:0.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            preview.textContent = chat.lastMessage || 'No messages';
+            info.appendChild(titleEl);
+            info.appendChild(preview);
+            item.appendChild(info);
+
+            item.addEventListener('click', () => selectChat(chat.id, null));
+            chatListEl.appendChild(item);
+
+            // Forum topics as sub-items
+            if (chat.topics && chat.topics.length > 0) {
+              for (const topic of chat.topics) {
+                const topicEl = document.createElement('div');
+                topicEl.style.cssText = 'padding:5px 10px 5px 40px;cursor:pointer;font-size:11px;opacity:0.7;border-bottom:1px solid rgba(255,255,255,0.03);';
+                topicEl.textContent = '\\ud83d\\udcac ' + topic.name;
+                topicEl.addEventListener('mouseenter', () => { topicEl.style.opacity = '1'; topicEl.style.background = 'rgba(255,255,255,0.03)'; });
+                topicEl.addEventListener('mouseleave', () => { topicEl.style.opacity = '0.7'; topicEl.style.background = 'none'; });
+                topicEl.addEventListener('click', (e) => { e.stopPropagation(); selectChat(chat.id, topic.id); });
+                chatListEl.appendChild(topicEl);
+              }
+            }
+          }
+          highlightActive();
+        }
+
+        function highlightActive() {
+          const items = chatListEl.querySelectorAll('[data-chat-id]');
+          items.forEach(el => {
+            el.style.background = String(el.dataset.chatId) === String(currentChatId) ? 'rgba(42,171,238,0.15)' : 'none';
+          });
+        }
+
+        searchInput.addEventListener('input', () => renderChatList(searchInput.value));
+
+        // ── Messages ──
+        async function selectChat(chatId, topicId) {
+          currentChatId = chatId;
+          currentTopicId = topicId;
+          showMessages();
+          highlightActive();
+
+          const chat = chatData.find(c => String(c.id) === String(chatId));
+          let title = chat ? chat.title : 'Chat';
+          if (topicId && chat) {
+            const topic = chat.topics.find(t => t.id === topicId);
+            if (topic) title = chat.title + ' > ' + topic.name;
+          }
+          headerTitle.textContent = title;
+
+          while (msgList.firstChild) msgList.removeChild(msgList.firstChild);
+          const loadingEl = document.createElement('div');
+          loadingEl.textContent = 'Loading messages...';
+          loadingEl.style.cssText = 'text-align:center;opacity:0.5;padding:20px;font-size:12px;';
+          msgList.appendChild(loadingEl);
+
+          try {
+            let url = '/api/telegram/messages?chat_id=' + chatId + '&limit=${props.messageLimit || 100}';
+            if (topicId) url += '&topic_id=' + topicId;
+            const resp = await fetch(url);
+            const data = await resp.json();
+            while (msgList.firstChild) msgList.removeChild(msgList.firstChild);
+            if (data.messages) {
+              for (const msg of data.messages) appendMessage(msg);
+            }
+            msgList.scrollTop = msgList.scrollHeight;
+          } catch (e) {
+            while (msgList.firstChild) msgList.removeChild(msgList.firstChild);
+            const errEl = document.createElement('div');
+            errEl.textContent = 'Failed to load messages';
+            errEl.style.cssText = 'text-align:center;color:#ff6b6b;padding:20px;font-size:12px;';
+            msgList.appendChild(errEl);
+          }
+        }
+
+        function appendMessage(msg) {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;gap:6px;align-items:flex-start;';
+
+          if (${props.showAvatars !== 'false'}) {
+            const av = document.createElement('div');
+            const name = msg.from ? (msg.from.first_name || msg.from.username || '?') : '?';
+            av.textContent = name.charAt(0).toUpperCase();
+            const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F'];
+            const colorIdx = Math.abs(msg.from ? msg.from.id : 0) % colors.length;
+            av.style.cssText = 'width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;background:' + colors[colorIdx] + ';color:#000;';
+            row.appendChild(av);
+          }
+
+          const bubble = document.createElement('div');
+          bubble.style.cssText = 'flex:1;min-width:0;';
+          const meta = document.createElement('div');
+          meta.style.cssText = 'display:flex;align-items:baseline;gap:6px;margin-bottom:1px;';
+          const senderEl = document.createElement('span');
+          senderEl.style.cssText = 'font-weight:600;font-size:11px;color:#2AABEE;';
+          senderEl.textContent = msg.from ? (msg.from.first_name || msg.from.username || 'Unknown') : 'System';
+          const timeEl = document.createElement('span');
+          timeEl.style.cssText = 'font-size:10px;opacity:0.4;';
+          const d = new Date(msg.date * 1000);
+          timeEl.textContent = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+          meta.appendChild(senderEl);
+          meta.appendChild(timeEl);
+          bubble.appendChild(meta);
+
+          const textEl = document.createElement('div');
+          textEl.style.cssText = 'font-size:12px;word-break:break-word;';
+          if (msg.text) {
+            textEl.textContent = msg.text;
+          } else if (msg.document) {
+            textEl.textContent = '\\ud83d\\udcce ' + (msg.document.file_name || 'Document');
+          } else if (msg.photo) {
+            textEl.textContent = '\\ud83d\\uddbc Photo';
+          } else if (msg.sticker) {
+            textEl.textContent = msg.sticker.emoji || '\\ud83c\\udff7 Sticker';
+          } else if (msg.voice) {
+            textEl.textContent = '\\ud83c\\udfa4 Voice message';
+          } else if (msg.video) {
+            textEl.textContent = '\\ud83c\\udfa5 Video';
+          } else {
+            textEl.textContent = '[unsupported message type]';
+          }
+          bubble.appendChild(textEl);
+          if (msg.caption) {
+            const capEl = document.createElement('div');
+            capEl.style.cssText = 'font-size:11px;opacity:0.7;margin-top:2px;';
+            capEl.textContent = msg.caption;
+            bubble.appendChild(capEl);
+          }
+          row.appendChild(bubble);
+          msgList.appendChild(row);
+        }
+
+        // ── Send message ──
+        async function sendMessage() {
+          const text = msgInput.value.trim();
+          if (!text || !currentChatId) return;
+          msgInput.value = '';
+          try {
+            const body = { chat_id: currentChatId, text: text };
+            if (currentTopicId) body.topic_id = currentTopicId;
+            await fetch('/api/telegram/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
+          } catch (e) { console.error('Send failed:', e); }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        msgInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+        // ── File upload ──
+        attachBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async () => {
+          const file = fileInput.files[0];
+          if (!file || !currentChatId) return;
+          const fd = new FormData();
+          fd.append('chat_id', currentChatId);
+          fd.append('file', file);
+          if (currentTopicId) fd.append('topic_id', currentTopicId);
+          try {
+            await fetch('/api/telegram/upload', { method: 'POST', body: fd });
+          } catch (e) { console.error('Upload failed:', e); }
+          fileInput.value = '';
+        });
+
+        // ── SSE real-time ──
+        let evtSource = null;
+        function connectSSE() {
+          if (evtSource) evtSource.close();
+          evtSource = new EventSource('/api/telegram/stream');
+          evtSource.onmessage = (event) => {
+            try {
+              const payload = JSON.parse(event.data);
+              if (payload.type === 'message' && payload.message) {
+                // Update chat list data
+                const existing = chatData.find(c => String(c.id) === String(payload.chatId));
+                if (existing) {
+                  existing.lastMessage = payload.message.text || '[media]';
+                  existing.lastMessageDate = payload.message.date;
+                  existing.messageCount++;
+                }
+                // Append to current view if matching
+                if (String(payload.chatId) === String(currentChatId)) {
+                  const topicMatch = !currentTopicId || payload.message.message_thread_id === currentTopicId;
+                  if (topicMatch) {
+                    appendMessage(payload.message);
+                    msgList.scrollTop = msgList.scrollHeight;
+                  }
+                }
+                // Refresh chat list order
+                chatData.sort((a, b) => b.lastMessageDate - a.lastMessageDate);
+                renderChatList(searchInput.value);
+              }
+            } catch (e) {}
+          };
+          evtSource.onerror = () => {
+            evtSource.close();
+            setTimeout(connectSSE, 5000);
+          };
+        }
+
+        // ── Initial load ──
+        async function loadChats() {
+          try {
+            const resp = await fetch('/api/telegram/chats');
+            chatData = await resp.json();
+            renderChatList('');
+          } catch (e) {
+            const errEl = document.createElement('div');
+            errEl.textContent = 'Failed to load chats';
+            errEl.style.cssText = 'padding:10px;color:#ff6b6b;font-size:12px;text-align:center;';
+            chatListEl.appendChild(errEl);
+          }
+        }
+
+        loadChats();
+        connectSSE();
+        updateLayout();
+
+        // Poll for new chats periodically
+        setInterval(async () => {
+          try {
+            const resp = await fetch('/api/telegram/chats');
+            chatData = await resp.json();
+            renderChatList(searchInput.value);
+          } catch (e) {}
+        }, ${(props.pollInterval || 30) * 1000});
+      })();
+    `
+  },
+
 };
 
 // Export for use in builder
