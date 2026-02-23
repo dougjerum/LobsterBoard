@@ -75,7 +75,7 @@ else
   if ssh -f -N \
     -L "$OC_PORT:127.0.0.1:$OC_PORT" \
     -L "$TG_BRIDGE_PORT:127.0.0.1:$TG_BRIDGE_PORT" \
-    "$MINI_TS_IP" 2>/dev/null; then
+    "m_claw@$MINI_TS_IP" 2>/dev/null; then
     TUNNEL_PID=$(lsof -ti:"$OC_PORT" -sTCP:LISTEN 2>/dev/null | head -1)
     ok "Tunnel active (PID ${TUNNEL_PID:-unknown})"
   else
