@@ -3336,8 +3336,9 @@ const WIDGETS = {
 
             row.onclick = function() {
               var title = chat.title || 'Chat ' + chat.id;
-              if (chat.is_forum) {
-                loadTopics(chat.id, title);
+              if (chat.topics && chat.topics.length) {
+                currentChatIsForum = true;
+                showTopics(chat.id, title, chat.topics);
               } else {
                 currentChatIsForum = false;
                 currentTopicId = null;
@@ -3575,20 +3576,25 @@ const WIDGETS = {
         }
 
         function loadTopics(chatId, chatTitle) {
-          fetch('/api/telegram/topics?chat_id=' + chatId)
+          // Topics are embedded in the chat object — re-fetch chats to get fresh topic data
+          fetch('/api/telegram/chats')
             .then(function(r) { return r.json(); })
-            .then(function(data) {
-              if (Array.isArray(data) && data.length) {
-                showTopics(chatId, chatTitle, data);
+            .then(function(chats) {
+              if (!Array.isArray(chats)) { loadChats(); return; }
+              var chat = null;
+              for (var i = 0; i < chats.length; i++) {
+                if (chats[i].id === chatId) { chat = chats[i]; break; }
+              }
+              if (chat && chat.topics && chat.topics.length) {
+                showTopics(chatId, chatTitle, chat.topics);
               } else {
-                // Bridge doesn't support topics or none found — fall back to messages
+                // No topics found — fall back to messages
                 currentChatIsForum = false;
                 currentTopicId = null;
                 loadMessages(chatId, chatTitle);
               }
             })
             .catch(function() {
-              // Bridge error — fall back to messages
               currentChatIsForum = false;
               currentTopicId = null;
               loadMessages(chatId, chatTitle);
