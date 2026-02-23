@@ -656,6 +656,71 @@ function parseIcal(text, maxEvents) {
   return events.slice(0, maxEvents);
 }
 
+// ─────────────────────────────────────────────
+// Telegram Bot — polling mode via getUpdates
+// ─────────────────────────────────────────────
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+let tgBot = null;
+const tgMessageCache = new Map();       // chatId -> Message[]
+const tgChatMeta = new Map();           // chatId -> { id, title, type, topics: Map }
+const tgSseClients = new Set();         // SSE response objects
+const TG_CACHE_LIMIT = 100;             // max messages per chat
+
+if (TELEGRAM_TOKEN) {
+  tgBot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+  console.log('Telegram bot started (polling mode)');
+
+  tgBot.on('message', (msg) => {
+    const chatId = msg.chat.id;
+
+    // Track chat metadata
+    if (!tgChatMeta.has(chatId)) {
+      tgChatMeta.set(chatId, {
+        id: chatId,
+        title: msg.chat.title || msg.chat.first_name || String(chatId),
+        type: msg.chat.type,
+        topics: new Map()
+      });
+    }
+
+    // Track forum topics
+    if (msg.forum_topic_created) {
+      const meta = tgChatMeta.get(chatId);
+      meta.topics.set(msg.message_thread_id, {
+        id: msg.message_thread_id,
+        name: msg.forum_topic_created.name
+      });
+    }
+    if (msg.message_thread_id && msg.chat.is_forum) {
+      const meta = tgChatMeta.get(chatId);
+      if (!meta.topics.has(msg.message_thread_id)) {
+        meta.topics.set(msg.message_thread_id, {
+          id: msg.message_thread_id,
+          name: 'Topic ' + msg.message_thread_id
+        });
+      }
+    }
+
+    // Cache message
+    if (!tgMessageCache.has(chatId)) tgMessageCache.set(chatId, []);
+    const cache = tgMessageCache.get(chatId);
+    cache.push(msg);
+    if (cache.length > TG_CACHE_LIMIT) cache.shift();
+
+    // Broadcast to SSE clients
+    const ssePayload = JSON.stringify({ type: 'message', chatId, message: msg });
+    for (const client of tgSseClients) {
+      client.write(`data: ${ssePayload}\n\n`);
+    }
+  });
+
+  tgBot.on('polling_error', (err) => {
+    console.error('Telegram polling error:', err.message);
+  });
+} else {
+  console.log('TELEGRAM_BOT_TOKEN not set — Telegram widget disabled');
+}
+
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
