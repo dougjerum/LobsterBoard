@@ -56,10 +56,21 @@ fi
 # ── SSH tunnel to Mac Mini for OpenClaw + Telegram Bridge ──
 # Skip if tunnel already active (idempotent for launchd restarts)
 TUNNEL_PID=""
-if lsof -ti:"$OC_PORT" -sTCP:LISTEN &>/dev/null && lsof -ti:"$TG_BRIDGE_PORT" -sTCP:LISTEN &>/dev/null; then
+OC_UP=false; TG_UP=false
+lsof -ti:"$OC_PORT" -sTCP:LISTEN &>/dev/null && OC_UP=true
+lsof -ti:"$TG_BRIDGE_PORT" -sTCP:LISTEN &>/dev/null && TG_UP=true
+
+if $OC_UP && $TG_UP; then
   TUNNEL_PID=$(lsof -ti:"$OC_PORT" -sTCP:LISTEN 2>/dev/null | head -1)
   ok "SSH tunnel already active (PID $TUNNEL_PID)"
 else
+  # Kill stale partial tunnel so fresh SSH can bind both ports
+  if $OC_UP || $TG_UP; then
+    err "Partial tunnel detected (OC=$OC_UP TG=$TG_UP) — killing stale listeners"
+    lsof -ti:"$OC_PORT" -sTCP:LISTEN 2>/dev/null | xargs -r kill 2>/dev/null || true
+    lsof -ti:"$TG_BRIDGE_PORT" -sTCP:LISTEN 2>/dev/null | xargs -r kill 2>/dev/null || true
+    sleep 1
+  fi
   log "Opening SSH tunnel to Mac Mini ($MINI_TS_IP — ports $OC_PORT, $TG_BRIDGE_PORT)..."
   if ssh -f -N \
     -L "$OC_PORT:127.0.0.1:$OC_PORT" \

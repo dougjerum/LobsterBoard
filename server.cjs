@@ -17,6 +17,8 @@ const WebSocket = require('ws');
 
 const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '127.0.0.1';
+const TG_BRIDGE_PORT = process.env.TG_BRIDGE_PORT || 18790;
+const TG_BRIDGE = `http://127.0.0.1:${TG_BRIDGE_PORT}`;
 
 // ─────────────────────────────────────────────
 // OpenClaw WebSocket RPC Client
@@ -1136,9 +1138,6 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── Telegram Bridge proxy ─────────────────────────────────
-  const TG_BRIDGE_PORT = process.env.TG_BRIDGE_PORT || 18790;
-  const TG_BRIDGE = `http://127.0.0.1:${TG_BRIDGE_PORT}`;
-
   if (pathname.startsWith('/api/telegram/')) {
     const bridgePath = pathname.slice('/api/telegram'.length); // e.g. "/chats", "/auth/status"
 
@@ -1170,8 +1169,11 @@ const server = http.createServer(async (req, res) => {
         if (req.method === 'POST') {
           body = await new Promise((resolve, reject) => {
             let data = '';
-            req.on('data', chunk => data += chunk);
+            let overflow = false;
+            const MAX_BODY = 64 * 1024; // 64 KB limit for telegram proxy
+            req.on('data', chunk => { data += chunk; if (data.length > MAX_BODY) { overflow = true; req.destroy(); } });
             req.on('end', () => {
+              if (overflow) return reject(new Error('Request body too large'));
               try { resolve(JSON.parse(data)); } catch { resolve(data); }
             });
             req.on('error', reject);

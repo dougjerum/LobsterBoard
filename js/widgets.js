@@ -3200,7 +3200,8 @@ const WIDGETS = {
           if (state === 'waitPhoneNumber') {
             title.textContent = 'Telegram Login';
             input.placeholder = '+1 555 123 4567';
-            input.type = 'tel';
+            input.type = 'text';
+            input.inputMode = 'tel';
             btn.textContent = 'Send Code';
             btn.onclick = function() {
               var phone = input.value.trim();
@@ -3491,26 +3492,37 @@ const WIDGETS = {
         }
 
         // ── SSE for real-time messages ──
+        var sseReconnectTimer = null;
+        var sseDebounceTimer = null;
         function connectSSE() {
+          if (sseReconnectTimer) { clearTimeout(sseReconnectTimer); sseReconnectTimer = null; }
           if (eventSource) { eventSource.close(); eventSource = null; }
           try {
             eventSource = new EventSource('/api/telegram/stream');
             eventSource.onmessage = function(e) {
               try {
                 var data = JSON.parse(e.data);
-                if (data.type === 'message' && currentView === 'messages' && data.chatId === currentChatId) {
-                  // Reload messages for current chat
-                  loadMessages(currentChatId, currentChatTitle);
-                } else if (data.type === 'message' && currentView === 'chats') {
-                  // Refresh chat list to update previews
-                  loadChats();
+                if (data.type === 'message') {
+                  if (sseDebounceTimer) clearTimeout(sseDebounceTimer);
+                  sseDebounceTimer = setTimeout(function() {
+                    sseDebounceTimer = null;
+                    if (currentView === 'messages' && currentChatId) {
+                      loadMessages(currentChatId, currentChatTitle);
+                    } else if (currentView === 'chats') {
+                      loadChats();
+                    }
+                  }, 500);
                 }
               } catch(ex) {}
             };
             eventSource.onerror = function() {
               if (eventSource) { eventSource.close(); eventSource = null; }
-              // Retry SSE after delay
-              setTimeout(connectSSE, 10000);
+              if (!sseReconnectTimer) {
+                sseReconnectTimer = setTimeout(function() {
+                  sseReconnectTimer = null;
+                  connectSSE();
+                }, 10000);
+              }
             };
           } catch(ex) {}
         }
