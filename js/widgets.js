@@ -702,14 +702,16 @@ const WIDGETS = {
           list.innerHTML = jobs.map(job => {
             const statusDot = job.enabled ? '🟢' : '🔴';
             const lastRun = job.lastRun ? new Date(job.lastRun).toLocaleTimeString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Never';
+            const nextRun = job.nextRun ? new Date(job.nextRun).toLocaleTimeString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
             const statusBadge = job.lastStatus ? (job.lastStatus === 'ok' ? '✓' : '✗') : '';
             return '<div class="cron-item" style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border,#30363d);font-size:calc(13px * var(--font-scale, 1));">' +
               '<span style="flex-shrink:0;">' + statusDot + '</span>' +
               '<div style="flex:1;min-width:0;">' +
                 '<div style="font-weight:500;">' + job.name + '</div>' +
               '</div>' +
-              '<div style="text-align:right;font-size:0.8em;opacity:0.6;flex-shrink:0;">' +
-                '<div>' + statusBadge + ' ' + lastRun + '</div>' +
+              '<div style="text-align:right;font-size:0.8em;flex-shrink:0;">' +
+                '<div style="opacity:0.6;">' + statusBadge + ' ' + lastRun + '</div>' +
+                (nextRun ? '<div style="opacity:0.5;font-size:0.9em;">Next: ' + nextRun + '</div>' : '') +
               '</div>' +
             '</div>';
           }).join('');

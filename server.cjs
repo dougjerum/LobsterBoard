@@ -1147,7 +1147,8 @@ const server = http.createServer(async (req, res) => {
           tz: j.schedule?.tz || j.tz || '',
           enabled: j.enabled !== false,
           lastRun: j.state?.lastRunAtMs ? new Date(j.state.lastRunAtMs).toISOString() : null,
-          lastStatus: j.state?.lastStatus || null
+          lastStatus: j.state?.lastStatus || null,
+          nextRun: j.state?.nextRunAtMs ? new Date(j.state.nextRunAtMs).toISOString() : null
         }));
         sendJson(res, 200, { jobs });
       } catch (e) {
