@@ -14,6 +14,7 @@ const os = require('os');
 const si = require('systeminformation');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const TelegramBot = require('node-telegram-bot-api');
 
 const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '127.0.0.1';

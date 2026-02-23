@@ -74,6 +74,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "node-telegram-bot-api": "^0.67.0",
     "systeminformation": "^5.30.7",
     "ws": "^8.19.0"
   }
