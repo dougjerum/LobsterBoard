@@ -3197,7 +3197,26 @@ const WIDGETS = {
         const chatListEl = document.createElement('div');
         chatListEl.style.cssText = 'flex:1;overflow-y:auto;';
 
+        const newChatBtn = document.createElement('button');
+        newChatBtn.textContent = '+ New Chat';
+        newChatBtn.style.cssText = 'width:calc(100% - 12px);margin:0 6px 6px;padding:6px;background:#2AABEE;border:none;color:white;border-radius:6px;font-size:11px;cursor:pointer;';
+        newChatBtn.addEventListener('click', () => {
+          const chatId = prompt('Enter Telegram chat ID or username (e.g. 123456789 or @username):');
+          if (!chatId) return;
+          const id = chatId.trim().replace(/^@/, '');
+          currentChatId = isNaN(id) ? id : Number(id);
+          currentTopicId = null;
+          headerTitle.textContent = 'Chat ' + chatId.trim();
+          while (msgList.firstChild) msgList.removeChild(msgList.firstChild);
+          const note = document.createElement('div');
+          note.textContent = 'Type a message to start the conversation';
+          note.style.cssText = 'text-align:center;opacity:0.5;padding:20px;font-size:12px;';
+          msgList.appendChild(note);
+          showMessages();
+        });
+
         chatListPanel.appendChild(searchInput);
+        chatListPanel.appendChild(newChatBtn);
         chatListPanel.appendChild(chatListEl);
 
         const messagePanel = document.createElement('div');
@@ -3460,16 +3479,27 @@ const WIDGETS = {
         // ── Send message ──
         async function sendMessage() {
           const text = msgInput.value.trim();
-          if (!text || !currentChatId) return;
+          if (!text) return;
+          if (!currentChatId) {
+            msgInput.style.border = '1px solid #ff6b6b';
+            msgInput.placeholder = 'Select a chat or click + New Chat first';
+            setTimeout(() => { msgInput.style.border = '1px solid rgba(255,255,255,0.1)'; msgInput.placeholder = 'Type a message...'; }, 2000);
+            return;
+          }
           msgInput.value = '';
           try {
             const body = { chat_id: currentChatId, text: text };
             if (currentTopicId) body.topic_id = currentTopicId;
-            await fetch('/api/telegram/send', {
+            const resp = await fetch('/api/telegram/send', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body)
             });
+            if (resp.ok) {
+              const sent = await resp.json();
+              appendMessage(sent);
+              msgList.scrollTop = msgList.scrollHeight;
+            }
           } catch (e) { console.error('Send failed:', e); }
         }
 
