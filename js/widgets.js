@@ -3177,6 +3177,8 @@ const WIDGETS = {
         const container = document.getElementById('${props.id}-container');
         const badge = document.getElementById('${props.id}-badge');
         if (!container) return;
+        if (container.dataset.initialized) return;
+        container.dataset.initialized = 'true';
 
         let currentChatId = null;
         let currentTopicId = null;
