@@ -346,12 +346,16 @@ const WIDGETS = {
           
           const cur = (data.current || '').replace(/^v/, '');
           const lat = (data.latest || '').replace(/^v/, '');
+          // Strip -N suffixes for comparison (e.g. 2026.2.22-2 matches 2026.2.22)
+          const curBase = cur.replace(/-\d+$/, '');
+          const latBase = lat.replace(/-\d+$/, '');
+          const isUpToDate = cur === lat || curBase === latBase || cur.startsWith(latBase + '-');
           
           if (!cur || cur === 'unknown') {
             currentEl.textContent = 'v' + lat;
             statusEl.textContent = 'Latest release';
             statusEl.style.color = '#8b949e';
-          } else if (cur === lat) {
+          } else if (isUpToDate) {
             currentEl.textContent = 'v' + cur;
             currentEl.style.color = '#3fb950';
             statusEl.innerHTML = '✓ Up to date';
@@ -424,12 +428,16 @@ const WIDGETS = {
           
           const cur = (data.current || '').replace(/^v/, '');
           const lat = (data.latest || '').replace(/^v/, '');
+          // Strip -N suffixes for comparison (e.g. 2026.2.22-2 matches 2026.2.22)
+          const curBase = cur.replace(/-\d+$/, '');
+          const latBase = lat.replace(/-\d+$/, '');
+          const isUpToDate = cur === lat || curBase === latBase || cur.startsWith(latBase + '-');
           
           if (!cur || cur === 'unknown') {
             currentEl.textContent = 'v' + lat;
             statusEl.textContent = 'Latest release';
             statusEl.style.color = '#8b949e';
-          } else if (cur === lat) {
+          } else if (isUpToDate) {
             currentEl.textContent = 'v' + cur;
             currentEl.style.color = '#3fb950';
             statusEl.innerHTML = '✓ Up to date';
