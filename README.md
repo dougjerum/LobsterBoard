@@ -37,8 +37,26 @@ Open **http://localhost:8080** → press **Ctrl+E** to enter edit mode → drag 
 - **Custom pages** — extend your dashboard with full custom pages (notes, kanban boards, anything)
 - **Canvas sizes** — preset resolutions (1920×1080, 2560×1440, etc.) or custom sizes
 - **Live data** — system stats stream via Server-Sent Events, widgets auto-refresh
-- **Dark theme** — the only correct choice
+- **5 themes** — Default (dark), Terminal (CRT green), Feminine (pastel pink), Feminine Dark, Paper (sepia)
 - **No cloud** — everything runs locally, your data stays yours
+
+## Themes
+
+LobsterBoard ships with 5 built-in themes. Switch themes from the dropdown in edit mode — your choice persists across sessions.
+
+| Default | Terminal | Paper |
+|---------|----------|-------|
+| ![Default](site-assets/themes/theme-default.png) | ![Terminal](site-assets/themes/theme-terminal.png) | ![Paper](site-assets/themes/theme-paper.png) |
+
+| Feminine | Feminine Dark |
+|----------|---------------|
+| ![Feminine](site-assets/themes/theme-feminine.png) | ![Feminine Dark](site-assets/themes/theme-feminine-dark.png) |
+
+- **Default** — dark theme with emoji icons (the classic look)
+- **Terminal** — green CRT aesthetic with scanlines and Phosphor icons
+- **Paper** — warm cream/sepia tones, serif fonts, vintage feel
+- **Feminine** — soft pink and lavender pastels with subtle glows
+- **Feminine Dark** — pink/purple accents on a dark background
 
 ## Configuration
 
