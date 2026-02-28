@@ -1361,3 +1361,9 @@ body[data-mode="edit"] .edit-layout-btn {
   border-radius: 4px; color: #8b949e; cursor: pointer; font-size: 11px; white-space: nowrap;
 }
 .secret-replace-btn:hover { background: #30363d; color: #e6edf3; }
+
+/* Hide page links in edit mode to reduce header clutter */
+body[data-mode="edit"] .page-link,
+body[data-mode="edit"] .page-separator {
+  display: none !important;
+}

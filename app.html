@@ -690,12 +690,13 @@
       const nav = document.getElementById('header-nav');
       if (!nav || !pages.length) return;
       const sep = document.createElement('span');
+      sep.className = 'page-separator';
       sep.style.cssText = 'width:1px;height:16px;background:#30363d;margin:0 4px';
       nav.insertBefore(sep, nav.firstChild);
       pages.reverse().forEach(p => {
         const a = document.createElement('a');
         a.href = '/pages/' + p.id;
-        a.className = 'nav-link';
+        a.className = 'nav-link page-link';
         a.textContent = p.icon + ' ' + p.title;
         nav.insertBefore(a, nav.firstChild);
       });
