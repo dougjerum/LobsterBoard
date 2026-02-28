@@ -25,6 +25,7 @@
         <select id="theme-select">
           <option value="default">🌙 Default (Dark)</option>
           <option value="feminine">🌸 Feminine</option>
+          <option value="feminine-dark">💜 Feminine Dark</option>
           <option value="terminal">💻 Terminal</option>
           <option value="paper">📜 Paper</option>
         </select>
@@ -726,7 +727,7 @@
       // Apply theme to body
       function applyTheme(theme) {
         // Remove all theme classes
-        document.body.classList.remove('theme-feminine', 'theme-terminal', 'theme-paper');
+        document.body.classList.remove('theme-feminine', 'theme-feminine-dark', 'theme-terminal', 'theme-paper');
         
         // Apply new theme class if not default
         if (theme && theme !== 'default') {

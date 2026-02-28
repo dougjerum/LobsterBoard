@@ -11,6 +11,18 @@
 */
 
 /* ============================================
+   Phosphor Icons Font (for terminal theme)
+   ============================================ */
+@font-face {
+  font-family: "Phosphor-Light";
+  src: url("../fonts/Phosphor-Light.woff2") format("woff2"),
+       url("../fonts/Phosphor-Light.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================
    Feminine Theme - Pastel Pink & Lavender
    Extracted from PR #7
    ============================================ */
@@ -397,6 +409,7 @@ body.theme-terminal {
 
 body.theme-paper {
   font-family: 'Georgia', 'Times New Roman', 'Palatino', serif;
+  background: #e8e0d4;
 }
 
 .theme-paper .builder-header,
@@ -415,15 +428,15 @@ body.theme-paper {
 
 .theme-paper .canvas-wrapper {
   background: 
-    linear-gradient(135deg, #faf8f5 0%, #f5f0e8 50%, #faf8f5 100%);
+    linear-gradient(135deg, #efe9e0 0%, #e8e0d4 50%, #efe9e0 100%);
 }
 
 .theme-paper .canvas {
-  background: #fffef9;
+  background: #f5f2eb;
   border-color: #d4cfc5;
   box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    0 4px 12px rgba(0, 0, 0, 0.05);
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .theme-paper .canvas-grid {
@@ -433,9 +446,11 @@ body.theme-paper {
 }
 
 .theme-paper .placed-widget {
-  background: #ffffff;
-  border-color: #d4cfc5;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: #fffffe;
+  border-color: #cdc5b8;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 3px 8px rgba(100, 80, 60, 0.1);
 }
 
 .theme-paper .placed-widget:hover {
@@ -487,7 +502,19 @@ body.theme-paper {
 }
 
 .theme-paper .builder-header {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: #fffdf8;
+  border-bottom: 3px solid #a89880;
+  box-shadow: 0 3px 10px rgba(80, 60, 40, 0.2);
+}
+
+.theme-paper .widget-panel {
+  background: #f7f3ed;
+  border-right: 2px solid #d4cfc5;
+}
+
+.theme-paper .properties-panel {
+  background: #f7f3ed;
+  border-left: 2px solid #d4cfc5;
 }
 
 .theme-paper .prop-group input:focus,
@@ -499,7 +526,8 @@ body.theme-paper {
 }
 
 .theme-paper .dash-card-head {
-  background: #f5f2ed;
+  background: #ebe5d8;
+  border-bottom: 2px solid #c5b8a5;
 }
 
 .theme-paper .kpi-value.blue { color: #4a7c9b !important; }
@@ -580,3 +608,851 @@ body.theme-paper {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
+
+/* ============================================
+   Placed Widget Icon System (.lb-icon)
+   Themeable icons for placed widgets on canvas
+   ============================================ */
+
+/* Base styles - shows emoji by default */
+.lb-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  line-height: 1;
+}
+
+/* Large icon variant (for widget body icons) */
+.lb-icon-lg {
+  font-size: calc(24px * var(--font-scale, 1));
+}
+
+/* ============================================
+   Terminal Theme - Phosphor Icon Overrides
+   Only affects .theme-terminal, default keeps emoji
+   Uses Phosphor-Light font loaded from CDN
+   ============================================ */
+
+/* Hide emoji text, show icon via ::after (sidebar icons) */
+.theme-terminal .widget-item .widget-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-terminal .widget-item .widget-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 20px !important;
+  font-weight: normal;
+  font-style: normal;
+  color: #00ff00 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+  content: "\ed54"; /* terminal icon as default fallback */
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* ============================================
+   Terminal Theme - Placed Widget Icons (.lb-icon)
+   ============================================ */
+
+/* Base styles for .lb-icon in terminal theme */
+.theme-terminal .lb-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+}
+
+.theme-terminal .lb-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 14px !important;
+  font-weight: normal;
+  font-style: normal;
+  color: #00ff00 !important;
+  text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+  content: "\e900"; /* default fallback */
+  position: absolute;
+}
+
+/* Large icon variant in terminal theme */
+.theme-terminal .lb-icon-lg {
+  width: calc(24px * var(--font-scale, 1));
+  height: calc(24px * var(--font-scale, 1));
+}
+
+.theme-terminal .lb-icon-lg::after {
+  font-size: calc(20px * var(--font-scale, 1)) !important;
+}
+
+/* ============================================
+   .lb-icon Phosphor Mappings (Terminal Theme)
+   ============================================ */
+
+/* Weather icons */
+.theme-terminal .lb-icon[data-icon="weather"]::after { content: "\ed6f"; } /* thermometer */
+.theme-terminal .lb-icon[data-icon="weather-sunny"]::after { content: "\ed3a"; } /* sun */
+.theme-terminal .lb-icon[data-icon="weather-cloudy"]::after { content: "\ea59"; } /* cloud-sun */
+.theme-terminal .lb-icon[data-icon="weather-rainy"]::after { content: "\ea56"; } /* cloud-rain */
+.theme-terminal .lb-icon[data-icon="weather-snowy"]::after { content: "\ecf5"; } /* snowflake */
+.theme-terminal .lb-icon[data-icon="world-weather"]::after { content: "\eb5a"; } /* globe */
+
+/* Time icons */
+.theme-terminal .lb-icon[data-icon="clock"]::after { content: "\ea46"; } /* clock */
+.theme-terminal .lb-icon[data-icon="countdown"]::after { content: "\eb95"; } /* hourglass */
+.theme-terminal .lb-icon[data-icon="cron"]::after { content: "\ed7b"; } /* timer */
+.theme-terminal .lb-icon[data-icon="pomodoro"]::after { content: "\ea76"; } /* crosshair */
+.theme-terminal .lb-icon[data-icon="world-clock"]::after { content: "\eb5a"; } /* globe */
+
+/* System icons */
+.theme-terminal .lb-icon[data-icon="cpu"]::after { content: "\ea72"; } /* cpu */
+.theme-terminal .lb-icon[data-icon="disk"]::after { content: "\eb82"; } /* hard-drive */
+.theme-terminal .lb-icon[data-icon="network"]::after { content: "\edd1"; } /* wifi-high */
+.theme-terminal .lb-icon[data-icon="docker"]::after { content: "\ea7b"; } /* cube */
+.theme-terminal .lb-icon[data-icon="uptime"]::after { content: "\e9d6"; } /* broadcast */
+.theme-terminal .lb-icon[data-icon="system-log"]::after { content: "\ede0"; } /* wrench */
+
+/* Auth / Security icons */
+.theme-terminal .lb-icon[data-icon="auth"]::after { content: "\ebc6"; } /* lock-key */
+.theme-terminal .lb-icon[data-icon="sleep"]::after { content: "\ec10"; } /* moon */
+
+/* Releases icons */
+.theme-terminal .lb-icon[data-icon="lobster"]::after { content: "\ec3d"; } /* package */
+.theme-terminal .lb-icon[data-icon="release"]::after { content: "\ec3d"; } /* package */
+
+/* Lists / Activity icons */
+.theme-terminal .lb-icon[data-icon="activity"]::after { content: "\ebc0"; } /* list */
+.theme-terminal .lb-icon[data-icon="calendar"]::after { content: "\e9e5"; } /* calendar */
+.theme-terminal .lb-icon[data-icon="notes"]::after { content: "\ec13"; } /* note */
+.theme-terminal .lb-icon[data-icon="todo"]::after { content: "\ea34"; } /* check-square */
+.theme-terminal .lb-icon[data-icon="pages"]::after { content: "\eb03"; } /* files */
+
+/* AI / Monitoring icons */
+.theme-terminal .lb-icon[data-icon="ai-claude"]::after { content: "\ea38"; } /* circle */
+.theme-terminal .lb-icon[data-icon="ai-cost"]::after { content: "\ea81"; } /* currency-dollar */
+.theme-terminal .lb-icon[data-icon="api-status"]::after { content: "\e96f"; } /* arrows-clockwise */
+.theme-terminal .lb-icon[data-icon="sessions"]::after { content: "\ea25"; } /* chat-dots */
+.theme-terminal .lb-icon[data-icon="tokens"]::after { content: "\ea18"; } /* chart-bar */
+
+/* Finance icons */
+.theme-terminal .lb-icon[data-icon="stock"]::after { content: "\ea1c"; } /* chart-line-up */
+.theme-terminal .lb-icon[data-icon="crypto"]::after { content: "\ea7d"; } /* currency-btc */
+
+/* Productivity icons */
+.theme-terminal .lb-icon[data-icon="email"]::after { content: "\eac5"; } /* envelope */
+.theme-terminal .lb-icon[data-icon="github"]::after { content: "\eb4f"; } /* git-branch */
+
+/* Smart Home icons */
+.theme-terminal .lb-icon[data-icon="home"]::after { content: "\eb98"; } /* house */
+.theme-terminal .lb-icon[data-icon="camera"]::after { content: "\e9eb"; } /* camera */
+.theme-terminal .lb-icon[data-icon="power"]::after { content: "\ec74"; } /* plug */
+
+/* Media icons */
+.theme-terminal .lb-icon[data-icon="music"]::after { content: "\ec23"; } /* music-notes */
+.theme-terminal .lb-icon[data-icon="quote"]::after { content: "\eca1"; } /* quotes */
+
+/* Image icons */
+.theme-terminal .lb-icon[data-icon="image"]::after { content: "\eba2"; } /* image */
+.theme-terminal .lb-icon[data-icon="image-random"]::after { content: "\ecc0"; } /* shuffle */
+.theme-terminal .lb-icon[data-icon="image-new"]::after { content: "\ecd9"; } /* sparkle */
+
+/* Links / Embeds icons */
+.theme-terminal .lb-icon[data-icon="links"]::after { content: "\ebc4"; } /* link */
+.theme-terminal .lb-icon[data-icon="embed"]::after { content: "\e9d8"; } /* browser */
+.theme-terminal .lb-icon[data-icon="rss"]::after { content: "\ecb8"; } /* rss */
+
+/* Layout icons */
+.theme-terminal .lb-icon[data-icon="header"]::after { content: "\ed57"; } /* text-aa */
+.theme-terminal .lb-icon[data-icon="line-h"]::after { content: "\ec0e"; } /* minus */
+.theme-terminal .lb-icon[data-icon="line-v"]::after { content: "\ebbc"; } /* line-vertical */
+
+/* ============================================
+   Sidebar Icon Mappings by data-widget attribute
+   ============================================ */
+
+/* Icon mappings by data-widget attribute - Phosphor Light unicode values */
+.theme-terminal [data-widget="weather"] .widget-icon::after,
+.theme-terminal [data-widget="weather-multi"] .widget-icon::after { content: "\ed6f"; } /* thermometer */
+
+.theme-terminal [data-widget="clock"] .widget-icon::after,
+.theme-terminal [data-widget="world-clock"] .widget-icon::after,
+.theme-terminal [data-widget="pomodoro"] .widget-icon::after { content: "\ea46"; } /* clock */
+
+.theme-terminal [data-widget="countdown"] .widget-icon::after { content: "\eb95"; } /* hourglass */
+
+.theme-terminal [data-widget="cpu-memory"] .widget-icon::after,
+.theme-terminal [data-widget="system-info"] .widget-icon::after { content: "\ea72"; } /* cpu */
+
+.theme-terminal [data-widget="disk-usage"] .widget-icon::after { content: "\eb82"; } /* hard-drive */
+
+.theme-terminal [data-widget="network-speed"] .widget-icon::after,
+.theme-terminal [data-widget="ping-status"] .widget-icon::after { content: "\edd1"; } /* wifi-high */
+
+.theme-terminal [data-widget="docker-status"] .widget-icon::after { content: "\ea7b"; } /* cube */
+
+.theme-terminal [data-widget="github-stats"] .widget-icon::after,
+.theme-terminal [data-widget="github-activity"] .widget-icon::after { content: "\eb4f"; } /* git-branch */
+
+.theme-terminal [data-widget="rss-ticker"] .widget-icon::after,
+.theme-terminal [data-widget="rss-feed"] .widget-icon::after { content: "\ecb8"; } /* rss */
+
+.theme-terminal [data-widget="crypto-price"] .widget-icon::after,
+.theme-terminal [data-widget="crypto-ticker"] .widget-icon::after { content: "\ea7d"; } /* currency-btc */
+
+.theme-terminal [data-widget="stock-price"] .widget-icon::after,
+.theme-terminal [data-widget="stock-chart"] .widget-icon::after { content: "\ea1b"; } /* chart-line */
+
+.theme-terminal [data-widget="kpi-number"] .widget-icon::after,
+.theme-terminal [data-widget="kpi-ring"] .widget-icon::after,
+.theme-terminal [data-widget="kpi-compare"] .widget-icon::after { content: "\ea18"; } /* chart-bar */
+
+.theme-terminal [data-widget="email-unread"] .widget-icon::after { content: "\eac5"; } /* envelope */
+
+.theme-terminal [data-widget="calendar"] .widget-icon::after,
+.theme-terminal [data-widget="calendar-agenda"] .widget-icon::after { content: "\e9e5"; } /* calendar */
+
+.theme-terminal [data-widget="todo-list"] .widget-icon::after,
+.theme-terminal [data-widget="checklist"] .widget-icon::after { content: "\ea34"; } /* check-square */
+
+.theme-terminal [data-widget="notes"] .widget-icon::after,
+.theme-terminal [data-widget="text-block"] .widget-icon::after { content: "\ec13"; } /* note */
+
+.theme-terminal [data-widget="iframe"] .widget-icon::after,
+.theme-terminal [data-widget="webview"] .widget-icon::after { content: "\e9d8"; } /* browser */
+
+.theme-terminal [data-widget="image"] .widget-icon::after { content: "\eba2"; } /* image */
+
+.theme-terminal [data-widget="quote"] .widget-icon::after { content: "\eca1"; } /* quotes */
+
+.theme-terminal [data-widget="bookmark"] .widget-icon::after,
+.theme-terminal [data-widget="links"] .widget-icon::after { content: "\ebc4"; } /* link */
+
+.theme-terminal [data-widget="uptime"] .widget-icon::after { content: "\ec98"; } /* activity/pulse */
+
+.theme-terminal [data-widget="api-status"] .widget-icon::after { content: "\e9d6"; } /* broadcast */
+
+.theme-terminal [data-widget="random"] .widget-icon::after { content: "\ea7b"; } /* cube */
+
+/* Globe icon for world widgets */
+.theme-terminal [data-widget="world-clock"] .widget-icon::after,
+.theme-terminal [data-widget="world-weather"] .widget-icon::after { content: "\eb5a"; } /* globe */
+
+/* ============================================
+   Feminine Theme - Phosphor Icon Overrides
+   Pink/Lavender icons with soft glow
+   ============================================ */
+
+/* Widget panel sidebar icons */
+.theme-feminine .widget-item .widget-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-feminine .widget-item .widget-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 20px !important;
+  font-weight: normal;
+  font-style: normal;
+  color: var(--accent-pink) !important;
+  text-shadow: 0 0 8px rgba(232, 71, 143, 0.4);
+  content: "\eca1"; /* default fallback */
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Placed widget icons (.lb-icon) */
+.theme-feminine .lb-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.theme-feminine .lb-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 14px;
+  color: var(--accent-pink);
+  text-shadow: 0 0 6px rgba(232, 71, 143, 0.3);
+  content: "\eca1"; /* default */
+}
+
+.theme-feminine .lb-icon-lg {
+  width: 48px;
+  height: 48px;
+}
+
+.theme-feminine .lb-icon-lg::after {
+  font-size: 42px;
+  text-shadow: 0 0 12px rgba(232, 71, 143, 0.4);
+}
+
+/* Feminine icon mappings */
+.theme-feminine .lb-icon[data-icon="weather"]::after,
+.theme-feminine [data-widget="weather"] .widget-icon::after,
+.theme-feminine [data-widget="weather-multi"] .widget-icon::after { content: "\ed6f"; }
+.theme-feminine .lb-icon[data-icon="weather-sunny"]::after { content: "\ed1d"; }
+.theme-feminine .lb-icon[data-icon="weather-cloudy"]::after { content: "\ea54"; }
+.theme-feminine .lb-icon[data-icon="weather-rain"]::after { content: "\ea5a"; }
+.theme-feminine .lb-icon[data-icon="weather-snow"]::after { content: "\ed11"; }
+.theme-feminine .lb-icon[data-icon="weather-fog"]::after { content: "\ea5a"; }
+.theme-feminine .lb-icon[data-icon="clock"]::after,
+.theme-feminine [data-widget="clock"] .widget-icon::after,
+.theme-feminine [data-widget="world-clock"] .widget-icon::after { content: "\ea46"; }
+.theme-feminine .lb-icon[data-icon="globe"]::after { content: "\eb5a"; }
+.theme-feminine .lb-icon[data-icon="countdown"]::after,
+.theme-feminine [data-widget="countdown"] .widget-icon::after { content: "\eb95"; }
+.theme-feminine .lb-icon[data-icon="cpu"]::after,
+.theme-feminine [data-widget="cpu-memory"] .widget-icon::after { content: "\ea72"; }
+.theme-feminine .lb-icon[data-icon="memory"]::after { content: "\ec9c"; }
+.theme-feminine .lb-icon[data-icon="disk"]::after,
+.theme-feminine [data-widget="disk-usage"] .widget-icon::after { content: "\eb82"; }
+.theme-feminine .lb-icon[data-icon="network"]::after,
+.theme-feminine [data-widget="network-speed"] .widget-icon::after { content: "\edd1"; }
+.theme-feminine .lb-icon[data-icon="docker"]::after,
+.theme-feminine [data-widget="docker-status"] .widget-icon::after { content: "\ea7b"; }
+.theme-feminine .lb-icon[data-icon="uptime"]::after { content: "\ec98"; }
+.theme-feminine .lb-icon[data-icon="broadcast"]::after { content: "\e9d6"; }
+.theme-feminine .lb-icon[data-icon="calendar"]::after,
+.theme-feminine [data-widget="calendar"] .widget-icon::after { content: "\e9e5"; }
+.theme-feminine .lb-icon[data-icon="today"]::after { content: "\e9e5"; }
+.theme-feminine .lb-icon[data-icon="todo"]::after,
+.theme-feminine [data-widget="todo-list"] .widget-icon::after { content: "\ea34"; }
+.theme-feminine .lb-icon[data-icon="notes"]::after,
+.theme-feminine [data-widget="notes"] .widget-icon::after { content: "\ec13"; }
+.theme-feminine .lb-icon[data-icon="text"]::after { content: "\ed57"; }
+.theme-feminine .lb-icon[data-icon="chart"]::after,
+.theme-feminine .lb-icon[data-icon="kpi"]::after,
+.theme-feminine [data-widget="kpi-number"] .widget-icon::after { content: "\ea18"; }
+.theme-feminine .lb-icon[data-icon="chart-line"]::after { content: "\ea1b"; }
+.theme-feminine .lb-icon[data-icon="ring"]::after { content: "\ea1b"; }
+.theme-feminine .lb-icon[data-icon="target"]::after { content: "\ed45"; }
+.theme-feminine .lb-icon[data-icon="stock"]::after,
+.theme-feminine [data-widget="stock-price"] .widget-icon::after { content: "\ea1b"; }
+.theme-feminine .lb-icon[data-icon="crypto"]::after,
+.theme-feminine [data-widget="crypto-price"] .widget-icon::after { content: "\ea7d"; }
+.theme-feminine .lb-icon[data-icon="email"]::after,
+.theme-feminine [data-widget="email-unread"] .widget-icon::after { content: "\eac5"; }
+.theme-feminine .lb-icon[data-icon="github"]::after,
+.theme-feminine [data-widget="github-stats"] .widget-icon::after { content: "\eb4f"; }
+.theme-feminine .lb-icon[data-icon="home"]::after { content: "\eb98"; }
+.theme-feminine .lb-icon[data-icon="camera"]::after { content: "\e9eb"; }
+.theme-feminine .lb-icon[data-icon="power"]::after { content: "\ec74"; }
+.theme-feminine .lb-icon[data-icon="music"]::after { content: "\ec23"; }
+.theme-feminine .lb-icon[data-icon="quote"]::after { content: "\eca1"; }
+.theme-feminine .lb-icon[data-icon="image"]::after,
+.theme-feminine [data-widget="image"] .widget-icon::after { content: "\eba2"; }
+.theme-feminine .lb-icon[data-icon="links"]::after,
+.theme-feminine [data-widget="bookmark"] .widget-icon::after { content: "\ebc4"; }
+.theme-feminine .lb-icon[data-icon="embed"]::after,
+.theme-feminine [data-widget="iframe"] .widget-icon::after { content: "\e9d8"; }
+.theme-feminine .lb-icon[data-icon="rss"]::after,
+.theme-feminine [data-widget="rss-ticker"] .widget-icon::after { content: "\ecb8"; }
+.theme-feminine .lb-icon[data-icon="header"]::after { content: "\ed57"; }
+.theme-feminine .lb-icon[data-icon="line-h"]::after { content: "\ec0e"; }
+.theme-feminine .lb-icon[data-icon="line-v"]::after { content: "\ebbc"; }
+.theme-feminine .lb-icon[data-icon="lobster"]::after { content: "\ecd9"; } /* sparkle */
+.theme-feminine .lb-icon[data-icon="cron"]::after,
+.theme-feminine [data-widget="pomodoro"] .widget-icon::after { content: "\ea46"; }
+.theme-feminine .lb-icon[data-icon="auth"]::after { content: "\ebd0"; }
+.theme-feminine .lb-icon[data-icon="sleep"]::after { content: "\ec1f"; }
+.theme-feminine .lb-icon[data-icon="release"]::after { content: "\ec9c"; }
+.theme-feminine .lb-icon[data-icon="log"]::after { content: "\ed54"; }
+.theme-feminine .lb-icon[data-icon="ai"]::after { content: "\eccc"; }
+
+/* ============================================
+   Paper Theme - Phosphor Icon Overrides
+   Warm sepia icons, clean minimal style
+   ============================================ */
+
+/* Widget panel sidebar icons */
+.theme-paper .widget-item .widget-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-paper .widget-item .widget-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 20px !important;
+  font-weight: normal;
+  font-style: normal;
+  color: var(--accent-blue) !important;
+  content: "\eca1"; /* default fallback */
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Placed widget icons (.lb-icon) */
+.theme-paper .lb-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.theme-paper .lb-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 14px;
+  color: #5c5650;
+  content: "\eca1"; /* default */
+}
+
+.theme-paper .lb-icon-lg {
+  width: 48px;
+  height: 48px;
+}
+
+.theme-paper .lb-icon-lg::after {
+  font-size: 42px;
+  color: var(--accent-blue);
+}
+
+/* Paper icon mappings */
+.theme-paper .lb-icon[data-icon="weather"]::after,
+.theme-paper [data-widget="weather"] .widget-icon::after,
+.theme-paper [data-widget="weather-multi"] .widget-icon::after { content: "\ed6f"; }
+.theme-paper .lb-icon[data-icon="weather-sunny"]::after { content: "\ed1d"; }
+.theme-paper .lb-icon[data-icon="weather-cloudy"]::after { content: "\ea54"; }
+.theme-paper .lb-icon[data-icon="weather-rain"]::after { content: "\ea5a"; }
+.theme-paper .lb-icon[data-icon="weather-snow"]::after { content: "\ed11"; }
+.theme-paper .lb-icon[data-icon="weather-fog"]::after { content: "\ea5a"; }
+.theme-paper .lb-icon[data-icon="clock"]::after,
+.theme-paper [data-widget="clock"] .widget-icon::after,
+.theme-paper [data-widget="world-clock"] .widget-icon::after { content: "\ea46"; }
+.theme-paper .lb-icon[data-icon="globe"]::after { content: "\eb5a"; }
+.theme-paper .lb-icon[data-icon="countdown"]::after,
+.theme-paper [data-widget="countdown"] .widget-icon::after { content: "\eb95"; }
+.theme-paper .lb-icon[data-icon="cpu"]::after,
+.theme-paper [data-widget="cpu-memory"] .widget-icon::after { content: "\ea72"; }
+.theme-paper .lb-icon[data-icon="memory"]::after { content: "\ec9c"; }
+.theme-paper .lb-icon[data-icon="disk"]::after,
+.theme-paper [data-widget="disk-usage"] .widget-icon::after { content: "\eb82"; }
+.theme-paper .lb-icon[data-icon="network"]::after,
+.theme-paper [data-widget="network-speed"] .widget-icon::after { content: "\edd1"; }
+.theme-paper .lb-icon[data-icon="docker"]::after,
+.theme-paper [data-widget="docker-status"] .widget-icon::after { content: "\ea7b"; }
+.theme-paper .lb-icon[data-icon="uptime"]::after { content: "\ec98"; }
+.theme-paper .lb-icon[data-icon="broadcast"]::after { content: "\e9d6"; }
+.theme-paper .lb-icon[data-icon="calendar"]::after,
+.theme-paper [data-widget="calendar"] .widget-icon::after { content: "\e9e5"; }
+.theme-paper .lb-icon[data-icon="today"]::after { content: "\e9e5"; }
+.theme-paper .lb-icon[data-icon="todo"]::after,
+.theme-paper [data-widget="todo-list"] .widget-icon::after { content: "\ea34"; }
+.theme-paper .lb-icon[data-icon="notes"]::after,
+.theme-paper [data-widget="notes"] .widget-icon::after { content: "\ec13"; }
+.theme-paper .lb-icon[data-icon="text"]::after { content: "\ed57"; }
+.theme-paper .lb-icon[data-icon="chart"]::after,
+.theme-paper .lb-icon[data-icon="kpi"]::after,
+.theme-paper [data-widget="kpi-number"] .widget-icon::after { content: "\ea18"; }
+.theme-paper .lb-icon[data-icon="chart-line"]::after { content: "\ea1b"; }
+.theme-paper .lb-icon[data-icon="ring"]::after { content: "\ea1b"; }
+.theme-paper .lb-icon[data-icon="target"]::after { content: "\ed45"; }
+.theme-paper .lb-icon[data-icon="stock"]::after,
+.theme-paper [data-widget="stock-price"] .widget-icon::after { content: "\ea1b"; }
+.theme-paper .lb-icon[data-icon="crypto"]::after,
+.theme-paper [data-widget="crypto-price"] .widget-icon::after { content: "\ea7d"; }
+.theme-paper .lb-icon[data-icon="email"]::after,
+.theme-paper [data-widget="email-unread"] .widget-icon::after { content: "\eac5"; }
+.theme-paper .lb-icon[data-icon="github"]::after,
+.theme-paper [data-widget="github-stats"] .widget-icon::after { content: "\eb4f"; }
+.theme-paper .lb-icon[data-icon="home"]::after { content: "\eb98"; }
+.theme-paper .lb-icon[data-icon="camera"]::after { content: "\e9eb"; }
+.theme-paper .lb-icon[data-icon="power"]::after { content: "\ec74"; }
+.theme-paper .lb-icon[data-icon="music"]::after { content: "\ec23"; }
+.theme-paper .lb-icon[data-icon="quote"]::after { content: "\eca1"; }
+.theme-paper .lb-icon[data-icon="image"]::after,
+.theme-paper [data-widget="image"] .widget-icon::after { content: "\eba2"; }
+.theme-paper .lb-icon[data-icon="links"]::after,
+.theme-paper [data-widget="bookmark"] .widget-icon::after { content: "\ebc4"; }
+.theme-paper .lb-icon[data-icon="embed"]::after,
+.theme-paper [data-widget="iframe"] .widget-icon::after { content: "\e9d8"; }
+.theme-paper .lb-icon[data-icon="rss"]::after,
+.theme-paper [data-widget="rss-ticker"] .widget-icon::after { content: "\ecb8"; }
+.theme-paper .lb-icon[data-icon="header"]::after { content: "\ed57"; }
+.theme-paper .lb-icon[data-icon="line-h"]::after { content: "\ec0e"; }
+.theme-paper .lb-icon[data-icon="line-v"]::after { content: "\ebbc"; }
+.theme-paper .lb-icon[data-icon="lobster"]::after { content: "\ecd9"; }
+.theme-paper .lb-icon[data-icon="cron"]::after,
+.theme-paper [data-widget="pomodoro"] .widget-icon::after { content: "\ea46"; }
+.theme-paper .lb-icon[data-icon="auth"]::after { content: "\ebd0"; }
+.theme-paper .lb-icon[data-icon="sleep"]::after { content: "\ec1f"; }
+.theme-paper .lb-icon[data-icon="release"]::after { content: "\ec9c"; }
+.theme-paper .lb-icon[data-icon="log"]::after { content: "\ed54"; }
+.theme-paper .lb-icon[data-icon="ai"]::after { content: "\eccc"; }
+
+/* Memory icon additions for all themes */
+.theme-terminal .lb-icon[data-icon="memory"]::after { content: "\e9d1"; } /* brain */
+.theme-feminine .lb-icon[data-icon="memory"]::after { content: "\e9d1"; } /* brain */
+.theme-paper .lb-icon[data-icon="memory"]::after { content: "\e9d1"; } /* brain */
+
+/* RSS Ticker overrides for light themes */
+.theme-paper .news-ticker-wrap {
+  background: var(--bg-tertiary);
+}
+
+.theme-paper .ticker-link {
+  color: var(--text-primary);
+}
+
+.theme-paper .ticker-link:hover {
+  color: var(--accent-blue);
+}
+
+.theme-paper .ticker-sep {
+  color: var(--border);
+}
+
+.theme-paper .ticker-label {
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.theme-feminine .news-ticker-wrap {
+  background: var(--bg-tertiary);
+}
+
+.theme-feminine .ticker-link {
+  color: var(--text-primary);
+}
+
+.theme-feminine .ticker-link:hover {
+  color: var(--accent-pink);
+}
+
+.theme-feminine .ticker-sep {
+  color: var(--border);
+}
+
+.theme-feminine .ticker-label {
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+/* Text/Header widget color overrides for light themes */
+.theme-paper .placed-widget[data-type="text-header"] > div,
+.theme-paper .placed-widget[data-type="text-header"] div,
+.theme-paper .placed-widget[data-type="text-header"] * {
+  color: #1a1815 !important;
+}
+
+.theme-feminine .placed-widget[data-type="text-header"] > div,
+.theme-feminine .placed-widget[data-type="text-header"] div,
+.theme-feminine .placed-widget[data-type="text-header"] * {
+  color: #2a1520 !important;
+}
+
+/* ============================================
+   Feminine Dark Theme - Purple/Pink on Dark
+   Based on PR #7 Commit 1
+   ============================================ */
+.theme-feminine-dark {
+  --bg-primary: #12091e;
+  --bg-secondary: #1a0f28;
+  --bg-tertiary: #241535;
+  --bg-hover: #321f58;
+  --border: #4a2d6e;
+  --border-soft: #3d2560;
+  --text-primary: #f0e6f6;
+  --text-secondary: #c9b8d9;
+  --text-muted: #9a85b0;
+  --accent-blue: #9b6cd8;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #f43f6e;
+  --accent-purple: #a855f7;
+  --accent-pink: #ec4899;
+  --accent-rose: #f472b6;
+  --accent-lavender: #c084fc;
+  --glow-pink: rgba(236, 72, 153, 0.25);
+  --glow-purple: rgba(168, 85, 247, 0.2);
+}
+
+body.theme-feminine-dark {
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+}
+
+.theme-feminine-dark .builder-header {
+  box-shadow: 0 2px 16px rgba(168, 85, 247, 0.15), 0 1px 0 rgba(236, 72, 153, 0.2);
+  border-bottom: 1px solid var(--border);
+}
+
+.theme-feminine-dark .header-left .logo-img {
+  filter: drop-shadow(0 0 10px var(--glow-pink));
+}
+
+.theme-feminine-dark .btn-primary {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-rose));
+  color: #fff;
+  box-shadow: 0 2px 15px rgba(236, 72, 153, 0.5);
+}
+
+.theme-feminine-dark .btn-primary:hover {
+  background: linear-gradient(135deg, #f472b6, #fb7185);
+  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.65);
+  transform: translateY(-1px);
+}
+
+.theme-feminine-dark .btn-done {
+  background: linear-gradient(135deg, var(--accent-lavender), var(--accent-purple));
+  box-shadow: 0 2px 15px rgba(192, 132, 252, 0.5);
+}
+
+.theme-feminine-dark .btn-done:hover {
+  background: linear-gradient(135deg, #d8b4fe, #c084fc);
+  box-shadow: 0 4px 20px rgba(192, 132, 252, 0.65);
+}
+
+.theme-feminine-dark .widget-item:hover {
+  box-shadow: 0 0 15px var(--glow-pink);
+  border-color: var(--accent-pink);
+  transform: translateX(2px);
+}
+
+.theme-feminine-dark .canvas-wrapper {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(236, 72, 153, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 55%),
+    #0f0818;
+}
+
+.theme-feminine-dark .canvas {
+  background: var(--bg-primary);
+  border-color: var(--border);
+  box-shadow:
+    0 0 30px rgba(168, 85, 247, 0.15),
+    0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.theme-feminine-dark .canvas-grid {
+  background-image:
+    linear-gradient(rgba(236, 72, 153, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(236, 72, 153, 0.08) 1px, transparent 1px);
+}
+
+.theme-feminine-dark .placed-widget {
+  background: var(--bg-secondary);
+  border-color: var(--border-soft);
+  box-shadow: 0 2px 12px rgba(168, 85, 247, 0.12), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.theme-feminine-dark .placed-widget:hover {
+  box-shadow: 0 0 0 2px var(--accent-pink), 0 4px 20px rgba(236, 72, 153, 0.25);
+  border-color: var(--accent-pink);
+}
+
+.theme-feminine-dark .placed-widget.selected {
+  box-shadow: 0 0 0 2px var(--accent-lavender), 0 4px 20px rgba(192, 132, 252, 0.25);
+  border-color: var(--accent-lavender);
+}
+
+.theme-feminine-dark .placed-widget .resize-handle {
+  background: linear-gradient(135deg, transparent 50%, var(--accent-pink) 50%);
+}
+
+.theme-feminine-dark .dash-card-head {
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-hover));
+  border-bottom: 1px solid var(--border);
+}
+
+.theme-feminine-dark .sidebar-mascot {
+  background: linear-gradient(to top, rgba(236, 72, 153, 0.1), transparent);
+}
+
+.theme-feminine-dark .sidebar-mascot img {
+  filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.4));
+}
+
+.theme-feminine-dark .modal {
+  background: rgba(18, 9, 30, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.theme-feminine-dark .modal-content {
+  box-shadow: 0 8px 40px rgba(168, 85, 247, 0.2), 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+}
+
+.theme-feminine-dark .modal-header {
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-hover));
+}
+
+.theme-feminine-dark .edit-layout-btn {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-rose));
+  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.5);
+}
+
+.theme-feminine-dark .edit-layout-btn:hover {
+  background: linear-gradient(135deg, #f472b6, #fb7185);
+  box-shadow: 0 6px 30px rgba(236, 72, 153, 0.7);
+}
+
+.theme-feminine-dark .tpl-modal-overlay,
+.theme-feminine-dark .pin-modal-overlay {
+  background: rgba(18, 9, 30, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.theme-feminine-dark .toggle-switch input:checked + .toggle-slider {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-rose));
+}
+
+.theme-feminine-dark .widget-verified {
+  color: var(--accent-pink);
+  background: rgba(236, 72, 153, 0.15);
+}
+
+.theme-feminine-dark .header-nav .nav-link:hover {
+  color: var(--accent-pink);
+}
+
+.theme-feminine-dark .kpi-value.blue { color: var(--accent-lavender) !important; }
+.theme-feminine-dark .kpi-value.green { color: var(--accent-green) !important; }
+.theme-feminine-dark .kpi-value.orange { color: var(--accent-orange) !important; }
+.theme-feminine-dark .kpi-value.red { color: var(--accent-rose) !important; }
+
+.theme-feminine-dark .tz-time {
+  color: var(--accent-pink);
+}
+
+.theme-feminine-dark ::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+}
+
+.theme-feminine-dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-lavender);
+}
+
+/* Feminine Dark icon overrides */
+.theme-feminine-dark .widget-item .widget-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-feminine-dark .widget-item .widget-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 20px !important;
+  font-weight: normal;
+  font-style: normal;
+  color: var(--accent-pink) !important;
+  text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+  content: "\eca1";
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.theme-feminine-dark .lb-icon {
+  font-size: 0 !important;
+  color: transparent !important;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.theme-feminine-dark .lb-icon::after {
+  font-family: 'Phosphor-Light' !important;
+  font-size: 14px;
+  color: var(--accent-pink);
+  text-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+  content: "\eca1";
+}
+
+.theme-feminine-dark .lb-icon-lg {
+  width: 48px;
+  height: 48px;
+}
+
+.theme-feminine-dark .lb-icon-lg::after {
+  font-size: 42px;
+  text-shadow: 0 0 15px rgba(236, 72, 153, 0.5);
+}
+
+/* Feminine Dark icon mappings */
+.theme-feminine-dark .lb-icon[data-icon="weather"]::after,
+.theme-feminine-dark [data-widget="weather"] .widget-icon::after { content: "\ed6f"; }
+.theme-feminine-dark .lb-icon[data-icon="clock"]::after,
+.theme-feminine-dark [data-widget="clock"] .widget-icon::after { content: "\ea46"; }
+.theme-feminine-dark .lb-icon[data-icon="cpu"]::after,
+.theme-feminine-dark [data-widget="cpu-memory"] .widget-icon::after { content: "\ea72"; }
+.theme-feminine-dark .lb-icon[data-icon="memory"]::after { content: "\e9d1"; }
+.theme-feminine-dark .lb-icon[data-icon="disk"]::after,
+.theme-feminine-dark [data-widget="disk-usage"] .widget-icon::after { content: "\eb82"; }
+.theme-feminine-dark .lb-icon[data-icon="network"]::after,
+.theme-feminine-dark [data-widget="network-speed"] .widget-icon::after { content: "\edd1"; }
+.theme-feminine-dark .lb-icon[data-icon="docker"]::after,
+.theme-feminine-dark [data-widget="docker-status"] .widget-icon::after { content: "\ea7b"; }
+.theme-feminine-dark .lb-icon[data-icon="uptime"]::after { content: "\ec98"; }
+.theme-feminine-dark .lb-icon[data-icon="broadcast"]::after { content: "\e9d6"; }
+.theme-feminine-dark .lb-icon[data-icon="calendar"]::after,
+.theme-feminine-dark [data-widget="calendar"] .widget-icon::after { content: "\e9e5"; }
+.theme-feminine-dark .lb-icon[data-icon="todo"]::after,
+.theme-feminine-dark [data-widget="todo-list"] .widget-icon::after { content: "\ea34"; }
+.theme-feminine-dark .lb-icon[data-icon="notes"]::after,
+.theme-feminine-dark [data-widget="notes"] .widget-icon::after { content: "\ec13"; }
+.theme-feminine-dark .lb-icon[data-icon="chart"]::after,
+.theme-feminine-dark [data-widget="kpi-number"] .widget-icon::after { content: "\ea18"; }
+.theme-feminine-dark .lb-icon[data-icon="email"]::after,
+.theme-feminine-dark [data-widget="email-unread"] .widget-icon::after { content: "\eac5"; }
+.theme-feminine-dark .lb-icon[data-icon="github"]::after,
+.theme-feminine-dark [data-widget="github-stats"] .widget-icon::after { content: "\eb4f"; }
+.theme-feminine-dark .lb-icon[data-icon="image"]::after,
+.theme-feminine-dark [data-widget="image"] .widget-icon::after { content: "\eba2"; }
+.theme-feminine-dark .lb-icon[data-icon="links"]::after,
+.theme-feminine-dark [data-widget="bookmark"] .widget-icon::after { content: "\ebc4"; }
+.theme-feminine-dark .lb-icon[data-icon="rss"]::after,
+.theme-feminine-dark [data-widget="rss-ticker"] .widget-icon::after { content: "\ecb8"; }
+.theme-feminine-dark .lb-icon[data-icon="globe"]::after { content: "\eb5a"; }
+.theme-feminine-dark .lb-icon[data-icon="countdown"]::after { content: "\eb95"; }
+.theme-feminine-dark .lb-icon[data-icon="quote"]::after { content: "\eca1"; }
+.theme-feminine-dark .lb-icon[data-icon="home"]::after { content: "\eb98"; }
+.theme-feminine-dark .lb-icon[data-icon="embed"]::after { content: "\e9d8"; }
