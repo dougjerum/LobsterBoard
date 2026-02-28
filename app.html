@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="css/builder.css">
+  <link rel="stylesheet" href="css/themes.css">
 </head>
 <body data-mode="view">
   <!-- Header -->
@@ -19,6 +20,15 @@
       </nav>
     </div>
     <div class="header-center">
+      <div class="theme-selector">
+        <label>Theme:</label>
+        <select id="theme-select">
+          <option value="default">🌙 Default (Dark)</option>
+          <option value="feminine">🌸 Feminine</option>
+          <option value="terminal">💻 Terminal</option>
+          <option value="paper">📜 Paper</option>
+        </select>
+      </div>
       <label>Font Scale:</label>
       <select id="font-scale">
         <option value="0.8">80%</option>
@@ -689,6 +699,84 @@
         nav.insertBefore(a, nav.firstChild);
       });
     }).catch(() => {});
+
+    // Theme Switcher System
+    (function() {
+      const THEME_KEY = 'lobsterboard-theme';
+      const themeSelect = document.getElementById('theme-select');
+      
+      // Get saved theme from localStorage or dashboard config
+      function getSavedTheme() {
+        // First check localStorage
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored) return stored;
+        
+        // Fallback to dashboard config if available
+        try {
+          const dashConfig = localStorage.getItem('lobsterboard-dashboard');
+          if (dashConfig) {
+            const config = JSON.parse(dashConfig);
+            if (config.theme) return config.theme;
+          }
+        } catch (e) {}
+        
+        return 'default';
+      }
+      
+      // Apply theme to body
+      function applyTheme(theme) {
+        // Remove all theme classes
+        document.body.classList.remove('theme-feminine', 'theme-terminal', 'theme-paper');
+        
+        // Apply new theme class if not default
+        if (theme && theme !== 'default') {
+          document.body.classList.add('theme-' + theme);
+        }
+      }
+      
+      // Save theme to localStorage and dashboard config
+      function saveTheme(theme) {
+        localStorage.setItem(THEME_KEY, theme);
+        
+        // Also update dashboard config for persistence
+        try {
+          const dashConfig = localStorage.getItem('lobsterboard-dashboard');
+          if (dashConfig) {
+            const config = JSON.parse(dashConfig);
+            config.theme = theme;
+            localStorage.setItem('lobsterboard-dashboard', JSON.stringify(config));
+          }
+        } catch (e) {}
+      }
+      
+      // Initialize theme on page load
+      const savedTheme = getSavedTheme();
+      applyTheme(savedTheme);
+      if (themeSelect) {
+        themeSelect.value = savedTheme;
+      }
+      
+      // Handle theme changes
+      if (themeSelect) {
+        themeSelect.addEventListener('change', function() {
+          const theme = this.value;
+          applyTheme(theme);
+          saveTheme(theme);
+        });
+      }
+      
+      // Expose theme API globally for other scripts
+      window.LobsterBoard = window.LobsterBoard || {};
+      window.LobsterBoard.theme = {
+        get: getSavedTheme,
+        set: function(theme) {
+          applyTheme(theme);
+          saveTheme(theme);
+          if (themeSelect) themeSelect.value = theme;
+        },
+        apply: applyTheme
+      };
+    })();
   </script>
 
   <!-- Template Gallery Modal -->

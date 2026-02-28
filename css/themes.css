@@ -1,0 +1,582 @@
+/* LobsterBoard Theme System
+   =========================
+   Themes override :root CSS custom properties via body class.
+   Default theme (dark GitHub-style) is defined in builder.css :root
+   
+   Available themes:
+   - (none/default) - Dark GitHub-style
+   - .theme-feminine - Pastel pink/lavender 
+   - .theme-terminal - Green phosphor CRT
+   - .theme-paper    - Light cream/sepia
+*/
+
+/* ============================================
+   Feminine Theme - Pastel Pink & Lavender
+   Extracted from PR #7
+   ============================================ */
+.theme-feminine {
+  --bg-primary: #fdf4f8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #fce8f2;
+  --bg-hover: #f9d5e8;
+  --border: #f0c2d8;
+  --border-soft: #f5d6e8;
+  --text-primary: #3b1f30;
+  --text-secondary: #7a4060;
+  --text-muted: #b07a95;
+  --accent-blue: #7c5dc7;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #f43f6e;
+  --accent-purple: #9b6cd8;
+  --accent-pink: #e8478f;
+  --accent-rose: #f43f6e;
+  --accent-lavender: #9b6cd8;
+  --glow-pink: rgba(232, 71, 143, 0.15);
+  --glow-purple: rgba(155, 108, 216, 0.12);
+}
+
+/* Feminine theme-specific overrides */
+.theme-feminine body,
+body.theme-feminine {
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(232, 71, 143, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(155, 108, 216, 0.06) 0%, transparent 50%);
+}
+
+.theme-feminine .builder-header {
+  box-shadow: 0 2px 16px rgba(180, 80, 130, 0.08), 0 1px 0 rgba(232, 71, 143, 0.1);
+}
+
+.theme-feminine .header-left .logo-img {
+  filter: drop-shadow(0 0 8px var(--glow-pink));
+}
+
+.theme-feminine .btn-primary {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-rose));
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(244, 114, 182, 0.4);
+}
+
+.theme-feminine .btn-primary:hover {
+  background: linear-gradient(135deg, #f584c1, #fd8a9a);
+  box-shadow: 0 4px 18px rgba(244, 114, 182, 0.55);
+  transform: translateY(-1px);
+}
+
+.theme-feminine .btn-done {
+  background: linear-gradient(135deg, var(--accent-lavender), var(--accent-blue));
+  box-shadow: 0 2px 12px rgba(192, 132, 252, 0.4);
+}
+
+.theme-feminine .btn-done:hover {
+  background: linear-gradient(135deg, #d09dff, #b8a0ff);
+  box-shadow: 0 4px 18px rgba(192, 132, 252, 0.55);
+}
+
+.theme-feminine .widget-item:hover {
+  box-shadow: 0 0 10px var(--glow-pink);
+  transform: translateX(2px);
+}
+
+.theme-feminine .canvas-wrapper {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(232, 71, 143, 0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 80%, rgba(155, 108, 216, 0.04) 0%, transparent 55%),
+    #f7ecf3;
+}
+
+.theme-feminine .canvas {
+  box-shadow:
+    0 4px 24px rgba(180, 80, 130, 0.1),
+    0 1px 4px rgba(180, 80, 130, 0.06);
+}
+
+.theme-feminine .canvas-grid {
+  background-image:
+    linear-gradient(rgba(232, 71, 143, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 71, 143, 0.06) 1px, transparent 1px);
+}
+
+.theme-feminine .placed-widget {
+  box-shadow: 0 2px 12px rgba(180, 80, 130, 0.08), 0 1px 3px rgba(180, 80, 130, 0.06);
+}
+
+.theme-feminine .placed-widget:hover {
+  box-shadow: 0 0 0 2px var(--accent-pink), 0 4px 16px rgba(232, 71, 143, 0.15);
+}
+
+.theme-feminine .placed-widget.selected {
+  box-shadow: 0 0 0 2px var(--accent-lavender), 0 4px 16px rgba(155, 108, 216, 0.18);
+}
+
+.theme-feminine .placed-widget .resize-handle {
+  background: linear-gradient(135deg, transparent 50%, var(--accent-pink) 50%);
+}
+
+.theme-feminine .dash-card-head {
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-hover));
+}
+
+.theme-feminine .sidebar-mascot {
+  background: linear-gradient(to top, rgba(232, 71, 143, 0.06), transparent);
+}
+
+.theme-feminine .sidebar-mascot img {
+  filter: drop-shadow(0 0 12px rgba(244, 114, 182, 0.3));
+}
+
+.theme-feminine .modal {
+  background: rgba(180, 80, 130, 0.25);
+  backdrop-filter: blur(6px);
+}
+
+.theme-feminine .modal-content {
+  box-shadow: 0 8px 40px rgba(180, 80, 130, 0.15), 0 2px 8px rgba(180, 80, 130, 0.08);
+}
+
+.theme-feminine .modal-header {
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-hover));
+}
+
+.theme-feminine .edit-layout-btn {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-rose));
+  box-shadow: 0 4px 20px rgba(244, 114, 182, 0.45);
+}
+
+.theme-feminine .edit-layout-btn:hover {
+  background: linear-gradient(135deg, #f584c1, #fd8a9a);
+  box-shadow: 0 6px 28px rgba(244, 114, 182, 0.6);
+}
+
+.theme-feminine .tpl-modal-overlay,
+.theme-feminine .pin-modal-overlay {
+  background: rgba(180, 80, 130, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.theme-feminine .toggle-switch input:checked + .toggle-slider {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-rose));
+}
+
+/* ============================================
+   Terminal Theme - Green Phosphor CRT
+   ============================================ */
+.theme-terminal {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #0f0f0f;
+  --bg-tertiary: #1a1a1a;
+  --bg-hover: #252525;
+  --border: #00ff0033;
+  --border-soft: #00ff0022;
+  --text-primary: #00ff00;
+  --text-secondary: #00cc00;
+  --text-muted: #009900;
+  --accent-blue: #00ffff;
+  --accent-green: #00ff00;
+  --accent-orange: #ffaa00;
+  --accent-red: #ff3333;
+  --accent-purple: #ff00ff;
+}
+
+/* Terminal theme CRT effects */
+body.theme-terminal {
+  font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+}
+
+.theme-terminal .builder-header,
+.theme-terminal .widget-panel,
+.theme-terminal .properties-panel,
+.theme-terminal .canvas-info {
+  font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+}
+
+/* Subtle CRT scanlines */
+.theme-terminal .canvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  border-radius: inherit;
+  z-index: 1000;
+}
+
+.theme-terminal .canvas-wrapper {
+  background: 
+    radial-gradient(ellipse at center, #0f1a0f 0%, #0a0a0a 100%);
+}
+
+.theme-terminal .canvas {
+  border-color: #00ff0044;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 0, 0.1),
+    inset 0 0 60px rgba(0, 255, 0, 0.03);
+}
+
+.theme-terminal .canvas-grid {
+  background-image:
+    linear-gradient(rgba(0, 255, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 0, 0.05) 1px, transparent 1px);
+}
+
+.theme-terminal .placed-widget {
+  background: #0f0f0f;
+  border-color: #00ff0033;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+}
+
+.theme-terminal .placed-widget:hover {
+  box-shadow: 0 0 0 2px #00ff0088, 0 0 15px rgba(0, 255, 0, 0.2);
+}
+
+.theme-terminal .placed-widget.selected {
+  box-shadow: 0 0 0 2px #00ffff88, 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.theme-terminal .placed-widget .resize-handle {
+  background: linear-gradient(135deg, transparent 50%, #00ff00 50%);
+}
+
+.theme-terminal .btn-primary {
+  background: #00ff00;
+  color: #0a0a0a;
+  border: 1px solid #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.theme-terminal .btn-primary:hover {
+  background: #33ff33;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+.theme-terminal .btn-secondary {
+  border-color: #00ff0044;
+}
+
+.theme-terminal .btn-secondary:hover {
+  border-color: #00ff00;
+  background: #1a1a1a;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.theme-terminal .btn-done {
+  background: #00ffff;
+  color: #0a0a0a;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.theme-terminal .btn-done:hover {
+  background: #66ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.theme-terminal .widget-item:hover {
+  border-color: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.theme-terminal .widget-verified {
+  color: #00ff00;
+  background: rgba(0, 255, 0, 0.15);
+}
+
+.theme-terminal .header-nav .nav-link:hover {
+  color: #00ff00;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.theme-terminal .builder-header {
+  border-bottom-color: #00ff0033;
+  box-shadow: 0 1px 0 #00ff0022;
+}
+
+.theme-terminal .widget-panel {
+  border-right-color: #00ff0022;
+}
+
+.theme-terminal .properties-panel {
+  border-left-color: #00ff0022;
+}
+
+.theme-terminal .canvas-info {
+  border-top-color: #00ff0022;
+}
+
+.theme-terminal .prop-group input:focus,
+.theme-terminal .prop-group select:focus,
+.theme-terminal .header-center select:focus,
+.theme-terminal .header-center input:focus {
+  border-color: #00ff00;
+  box-shadow: 0 0 0 3px rgba(0, 255, 0, 0.15);
+}
+
+.theme-terminal .modal {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.theme-terminal .modal-content {
+  border-color: #00ff0044;
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.15);
+}
+
+.theme-terminal .edit-layout-btn {
+  background: #00ff00;
+  color: #0a0a0a;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+}
+
+.theme-terminal .edit-layout-btn:hover {
+  background: #33ff33;
+  box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+}
+
+.theme-terminal .dash-card-head {
+  background: #1a1a1a;
+  border-bottom-color: #00ff0022;
+}
+
+.theme-terminal .kpi-value.blue { color: #00ffff !important; }
+.theme-terminal .kpi-value.green { color: #00ff00 !important; }
+.theme-terminal .kpi-value.orange { color: #ffaa00 !important; }
+.theme-terminal .kpi-value.red { color: #ff3333 !important; }
+
+.theme-terminal .tz-time {
+  color: #00ffff;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+.theme-terminal ::-webkit-scrollbar-thumb {
+  background: #00ff0044;
+}
+
+.theme-terminal ::-webkit-scrollbar-thumb:hover {
+  background: #00ff0088;
+}
+
+.theme-terminal .tpl-modal-overlay,
+.theme-terminal .pin-modal-overlay {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.theme-terminal .tpl-modal,
+.theme-terminal .pin-modal {
+  border-color: #00ff0044;
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.15);
+}
+
+.theme-terminal .toggle-switch input:checked + .toggle-slider {
+  background: #00ff00;
+}
+
+/* ============================================
+   Paper Theme - Light Cream/Sepia
+   ============================================ */
+.theme-paper {
+  --bg-primary: #faf8f5;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f5f2ed;
+  --bg-hover: #ebe7e0;
+  --border: #d4cfc5;
+  --border-soft: #e5e1d9;
+  --text-primary: #2d2a26;
+  --text-secondary: #5c5650;
+  --text-muted: #8a847a;
+  --accent-blue: #4a7c9b;
+  --accent-green: #5a8a5a;
+  --accent-orange: #b8860b;
+  --accent-red: #a85454;
+  --accent-purple: #7a6a8a;
+}
+
+body.theme-paper {
+  font-family: 'Georgia', 'Times New Roman', 'Palatino', serif;
+}
+
+.theme-paper .builder-header,
+.theme-paper .widget-panel h3,
+.theme-paper .properties-panel h3,
+.theme-paper .widget-section h4 {
+  font-family: 'Georgia', 'Times New Roman', 'Palatino', serif;
+}
+
+.theme-paper .widget-item,
+.theme-paper .prop-group,
+.theme-paper .canvas-info,
+.theme-paper .btn {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.theme-paper .canvas-wrapper {
+  background: 
+    linear-gradient(135deg, #faf8f5 0%, #f5f0e8 50%, #faf8f5 100%);
+}
+
+.theme-paper .canvas {
+  background: #fffef9;
+  border-color: #d4cfc5;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.theme-paper .canvas-grid {
+  background-image:
+    linear-gradient(rgba(180, 170, 150, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180, 170, 150, 0.1) 1px, transparent 1px);
+}
+
+.theme-paper .placed-widget {
+  background: #ffffff;
+  border-color: #d4cfc5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.theme-paper .placed-widget:hover {
+  box-shadow: 0 0 0 2px #4a7c9b, 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-paper .placed-widget.selected {
+  box-shadow: 0 0 0 2px #5a8a5a, 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-paper .placed-widget .resize-handle {
+  background: linear-gradient(135deg, transparent 50%, #4a7c9b 50%);
+}
+
+.theme-paper .btn-primary {
+  background: #4a7c9b;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.theme-paper .btn-primary:hover {
+  background: #5a8cab;
+}
+
+.theme-paper .btn-done {
+  background: #5a8a5a;
+  color: #ffffff;
+}
+
+.theme-paper .btn-done:hover {
+  background: #6a9a6a;
+}
+
+.theme-paper .btn-secondary:hover {
+  border-color: #4a7c9b;
+}
+
+.theme-paper .widget-item:hover {
+  border-color: #4a7c9b;
+}
+
+.theme-paper .widget-verified {
+  color: #5a8a5a;
+  background: rgba(90, 138, 90, 0.12);
+}
+
+.theme-paper .header-nav .nav-link:hover {
+  color: #4a7c9b;
+}
+
+.theme-paper .builder-header {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.theme-paper .prop-group input:focus,
+.theme-paper .prop-group select:focus,
+.theme-paper .header-center select:focus,
+.theme-paper .header-center input:focus {
+  border-color: #4a7c9b;
+  box-shadow: 0 0 0 3px rgba(74, 124, 155, 0.15);
+}
+
+.theme-paper .dash-card-head {
+  background: #f5f2ed;
+}
+
+.theme-paper .kpi-value.blue { color: #4a7c9b !important; }
+.theme-paper .kpi-value.green { color: #5a8a5a !important; }
+.theme-paper .kpi-value.orange { color: #b8860b !important; }
+.theme-paper .kpi-value.red { color: #a85454 !important; }
+
+.theme-paper .tz-time {
+  color: #4a7c9b;
+}
+
+.theme-paper .modal {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.theme-paper .modal-content {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.theme-paper .edit-layout-btn {
+  background: #4a7c9b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.theme-paper .edit-layout-btn:hover {
+  background: #5a8cab;
+}
+
+.theme-paper ::-webkit-scrollbar-thumb {
+  background: #d4cfc5;
+}
+
+.theme-paper ::-webkit-scrollbar-thumb:hover {
+  background: #c4bfb5;
+}
+
+.theme-paper .tpl-tag {
+  background: rgba(74, 124, 155, 0.12);
+  color: #4a7c9b;
+  border: 1px solid rgba(74, 124, 155, 0.2);
+}
+
+.theme-paper .toggle-switch input:checked + .toggle-slider {
+  background: #5a8a5a;
+}
+
+/* ============================================
+   Theme Selector Styles
+   ============================================ */
+.theme-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-selector label {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.theme-selector select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.theme-selector select:hover {
+  border-color: var(--accent-blue);
+}
+
+.theme-selector select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
