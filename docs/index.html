@@ -18,6 +18,7 @@
       </a>
       <div class="nav-links">
         <a href="#features">Features</a>
+        <a href="#themes">Themes</a>
         <a href="#widgets">Widgets</a>
         <a href="#screenshot">Demo</a>
         <a href="#quickstart">Quick Start</a>
@@ -100,8 +101,49 @@
     </div>
   </section>
 
+  <!-- Themes -->
+  <section id="themes" class="section section-dark">
+    <div class="container">
+      <h2 class="section-title">5 Built-in Themes</h2>
+      <p class="section-sub">Switch themes from the dropdown in edit mode. Your choice persists across sessions.</p>
+      <div class="themes-grid">
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="assets/themes/theme-default.png" alt="Default Theme" loading="lazy">
+          <h4>🌙 Default</h4>
+          <p>Dark theme with emoji icons — the classic look</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="assets/themes/theme-terminal.png" alt="Terminal Theme" loading="lazy">
+          <h4>💻 Terminal</h4>
+          <p>Green CRT aesthetic with scanlines and Phosphor icons</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="assets/themes/theme-paper.png" alt="Paper Theme" loading="lazy">
+          <h4>📜 Paper</h4>
+          <p>Warm cream/sepia tones with a vintage feel</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="assets/themes/theme-feminine.png" alt="Feminine Theme" loading="lazy">
+          <h4>🌸 Feminine</h4>
+          <p>Soft pink and lavender pastels with subtle glows</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="assets/themes/theme-feminine-dark.png" alt="Feminine Dark Theme" loading="lazy">
+          <h4>💜 Feminine Dark</h4>
+          <p>Pink and purple accents on a dark background</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
   <!-- Screenshot -->
-  <section id="screenshot" class="section section-dark">
+  <section id="screenshot" class="section">
     <div class="container">
       <h2 class="section-title">See It In Action</h2>
       <p class="section-sub">A real dashboard built with LobsterBoard. Drag, drop, save, done.</p>

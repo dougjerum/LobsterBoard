@@ -18,8 +18,8 @@
       </a>
       <div class="nav-links">
         <a href="#features">Features</a>
+        <a href="#themes">Themes</a>
         <a href="#widgets">Widgets</a>
-        <a href="#screenshot">Demo</a>
         <a href="#quickstart">Quick Start</a>
         <a href="https://github.com/curbob/LobsterBoard" target="_blank" class="btn btn-sm">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -105,8 +105,49 @@
     </div>
   </section>
 
+  <!-- Themes -->
+  <section id="themes" class="section section-dark">
+    <div class="container">
+      <h2 class="section-title">5 Built-in Themes</h2>
+      <p class="section-sub">Switch themes from the dropdown in edit mode. Your choice persists across sessions.</p>
+      <div class="themes-grid">
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="site-assets/themes/theme-default.png" alt="Default Theme" loading="lazy">
+          <h4>🌙 Default</h4>
+          <p>Dark theme with emoji icons — the classic look</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="site-assets/themes/theme-terminal.png" alt="Terminal Theme" loading="lazy">
+          <h4>💻 Terminal</h4>
+          <p>Green CRT aesthetic with scanlines and Phosphor icons</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="site-assets/themes/theme-paper.png" alt="Paper Theme" loading="lazy">
+          <h4>📜 Paper</h4>
+          <p>Warm cream/sepia tones with a vintage feel</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="site-assets/themes/theme-feminine.png" alt="Feminine Theme" loading="lazy">
+          <h4>🌸 Feminine</h4>
+          <p>Soft pink and lavender pastels with subtle glows</p>
+        </div>
+        <div class="theme-card" onclick="openLightbox(this)">
+          <img src="site-assets/themes/theme-feminine-dark.png" alt="Feminine Dark Theme" loading="lazy">
+          <h4>💜 Feminine Dark</h4>
+          <p>Pink and purple accents on a dark background</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
   <!-- Screenshot -->
-  <section id="screenshot" class="section section-dark">
+  <section id="screenshot" class="section">
     <div class="container">
       <h2 class="section-title">See It In Action</h2>
       <p class="section-sub">A real dashboard built with LobsterBoard. Drag, drop, save, done.</p>

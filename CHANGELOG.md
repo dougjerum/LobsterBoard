@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.1] - 2026-02-28
+
+### Fixed
+- **Edit mode header clutter** — page navigation links now hide when entering edit mode to reduce header crowding
+
+## [0.3.0] - 2026-02-28
+
+### Added
+- **Theme switcher** — 5 themes: Default (dark), Feminine (pastel pink/lavender), Feminine Dark, Terminal (green CRT), Paper (cream/sepia)
+- **Phosphor icon system** — themed widgets use Phosphor icons; Default theme keeps emoji
+- **Theme selector dropdown** in edit mode header
+- Theme persists to localStorage and dashboard config
+- **Themes showcase** on website and README with lightbox gallery
+
+## [0.2.6] - 2026-02-23
+
+### Fixed
+- **Version suffix comparison** — versions like `2026.2.22-2` (npm post-release patches) now correctly match GitHub tags like `v2026.2.22`, fixing false "Update available" indicators — thanks @JamesTsetsekas!
+
 ## [0.2.5] - 2026-02-19
 
 ### Fixed

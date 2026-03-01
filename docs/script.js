@@ -26,3 +26,24 @@ document.querySelectorAll('.nav-links a').forEach(a => {
     document.querySelector('.nav-links').classList.remove('open');
   });
 });
+
+// Lightbox for theme screenshots
+function openLightbox(card) {
+  const img = card.querySelector('img');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  lightboxImg.src = img.src;
+  lightboxImg.alt = img.alt;
+  lightbox.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close lightbox with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeLightbox();
+});
