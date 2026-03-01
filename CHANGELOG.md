@@ -12,6 +12,12 @@
 - **Phosphor icon system** — themed widgets use Phosphor icons; Default theme keeps emoji
 - **Theme selector dropdown** in edit mode header
 - Theme persists to localStorage and dashboard config
+- **Themes showcase** on website and README with lightbox gallery
+
+## [0.2.6] - 2026-02-23
+
+### Fixed
+- **Version suffix comparison** — versions like `2026.2.22-2` (npm post-release patches) now correctly match GitHub tags like `v2026.2.22`, fixing false "Update available" indicators — thanks @JamesTsetsekas!
 
 ## [0.2.5] - 2026-02-19
 
